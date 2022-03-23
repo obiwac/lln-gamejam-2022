@@ -19,5 +19,5 @@ static bool verbose = true;
 	fprintf(stderr, LOG_RED "[ERROR] " __VA_ARGS__); \
 	exit(EXIT_FAILURE);
 
-#define WARNING(...) \
+#define WARN(...) \
 	fprintf(stderr, LOG_YELLOW "[WARNING] " __VA_ARGS__);

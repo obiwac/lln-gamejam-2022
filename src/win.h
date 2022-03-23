@@ -197,7 +197,7 @@ win_t* create_win(uint32_t x_res, uint32_t y_res) {
 	EGLint render_buffer;
 	
 	if (!eglQueryContext(self->egl_display, self->egl_context, EGL_RENDER_BUFFER, &render_buffer) || render_buffer == EGL_SINGLE_BUFFER) {
-		WARNING("EGL surface is single buffered (%s)\n", egl_error_str())
+		WARN("EGL surface is single buffered (%s)\n", egl_error_str())
 	}
 
 	return self;
@@ -208,12 +208,6 @@ void win_loop(win_t* self, int (*draw_cb) (void* param), void* param) {
 		int type = event->response_type & XCB_EVENT_RESPONSE_TYPE_MASK;
 
 		if (type == XCB_EXPOSE) {
-			void (*_glClearColor) (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) = (void*) eglGetProcAddress((const GLubyte*) "glClearColor");
-			void (*_glClear) (GLbitfield mask) = (void*) eglGetProcAddress((const GLubyte*) "glClear");
-
-			_glClearColor(1.0, 0.0, 1.0, 1.0);
-			_glClear(GL_COLOR_BUFFER_BIT);
-
 			draw_cb(param);
 			eglSwapBuffers(self->egl_display, self->egl_surface);
 		}
