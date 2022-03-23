@@ -1,6 +1,11 @@
-#include <stdio.h>
+#include "log.h"
+#include "win.h"
 
 int main(void) {
-	printf("Hello world!\n");
+	LOG("Hello!\n")
+
+	win_t* win = create_win(800, 480);
+
+	LOG("Done\n");
 	return 0;
 }
