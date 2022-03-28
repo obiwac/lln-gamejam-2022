@@ -68,7 +68,7 @@ int main(void)
 	GL_REQUIRE(&game, UseProgram)
 	GL_REQUIRE(&game, BindAttribLocation)
 
-	testTriangle = create_object(&game.gl, create_shader(&game.gl, "shaders/default_vert.glsl", "shaders/default_frag.glsl"));
+	testTriangle = create_object(&game.gl, create_shader(&game.gl, "default"));
 
 	win_loop(game.win, draw, &game);
 
