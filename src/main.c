@@ -13,6 +13,8 @@ typedef struct
 {
 	win_t *win;
 	gl_funcs_t gl;
+
+	GLuint mvp_matrix_uniform;
 } game_t;
 
 static object_t *testTriangle;
@@ -24,7 +26,10 @@ int draw(void *param)
 
 	gl->ClearColor(1.0, 0.0, 1.0, 1.0);
 	gl->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
 	render_object(gl, testTriangle);
+
 	return 0;
 }
 
@@ -67,8 +72,12 @@ int main(void)
 	GL_REQUIRE(&game, GenVertexArrays)
 	GL_REQUIRE(&game, UseProgram)
 	GL_REQUIRE(&game, BindAttribLocation)
+	GL_REQUIRE(&game, GetUniformLocation)
 
-	testTriangle = create_object(&game.gl, create_shader(&game.gl, "default"));
+	shader_t* shader = create_shader(&game.gl, "default");
+	game.mvp_matrix_uniform = shader_uniform_location(shader, "mvp_matrix");
+
+	testTriangle = create_object(&game.gl, shader);
 
 	win_loop(game.win, draw, &game);
 

@@ -10,6 +10,7 @@
 
 typedef struct
 {
+	gl_funcs_t* gl;
 	GLuint program;
 } shader_t;
 
@@ -89,6 +90,8 @@ shader_t *create_shader(gl_funcs_t *gl, const char *name)
 	// Compile the shaders
 	shader_t *self = (shader_t *)calloc(1, sizeof(shader_t));
 
+	self->gl = gl;
+
 	GLuint vertexOut = gl->CreateShader(GL_VERTEX_SHADER);
 	GLuint pixelOut = gl->CreateShader(GL_FRAGMENT_SHADER);
 
@@ -119,11 +122,15 @@ error:
 	return self;
 }
 
-void shader_use(gl_funcs_t *gl, shader_t *shader)
+void shader_use(shader_t *self)
 {
-	gl->BindAttribLocation(shader->program, 0, "position");
-	gl->UseProgram(shader->program);
+	self->gl->BindAttribLocation(self->program, 0, "position");
+	self->gl->UseProgram(self->program);
 	printf("TODO %s\n", __func__);
+}
+
+GLuint shader_uniform_location(shader_t* self, const char* uniform) {
+	return self->gl->GetUniformLocation(self->program, uniform);
 }
 
 // TODO create probably a hashmap of sorts for all these uniform locations

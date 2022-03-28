@@ -61,7 +61,7 @@ void free_object(gl_funcs_t *gl, object_t *self)
 
 void render_object(gl_funcs_t *gl, object_t *self)
 {
-	shader_use(gl, self->shader);
+	shader_use(self->shader);
 	gl->BindVertexArray(self->vao);
 	gl->DrawArrays(GL_TRIANGLES, 0, 3);
 
