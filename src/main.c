@@ -15,6 +15,7 @@ typedef struct
 	gl_funcs_t gl;
 
 	GLuint mvp_matrix_uniform;
+	GLuint tint_uniform;
 } game_t;
 
 static object_t *testTriangle;
@@ -27,6 +28,7 @@ int draw(void *param)
 	gl->ClearColor(1.0, 0.0, 1.0, 1.0);
 	gl->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	shader_uniform(self->tint_uniform, ((float[4]) { 0.0, 0.0, 1.0, 1.0 }));
 
 	render_object(gl, testTriangle);
 
@@ -73,9 +75,14 @@ int main(void)
 	GL_REQUIRE(&game, UseProgram)
 	GL_REQUIRE(&game, BindAttribLocation)
 	GL_REQUIRE(&game, GetUniformLocation)
+	GL_REQUIRE(&game, UniformMatrix4fv)
+	GL_REQUIRE(&game, Uniform4fv)
+	GL_REQUIRE(&game, Uniform1f)
+	GL_REQUIRE(&game, Uniform1i)
 
 	shader_t* shader = create_shader(&game.gl, "default");
 	game.mvp_matrix_uniform = shader_uniform_location(shader, "mvp_matrix");
+	game.tint_uniform = shader_uniform_location(shader, "tint");
 
 	testTriangle = create_object(&game.gl, shader);
 

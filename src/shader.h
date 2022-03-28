@@ -2,6 +2,7 @@
 
 #include "log.h"
 #include "gl/gl.h"
+#include "matrix.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -135,9 +136,28 @@ GLuint shader_uniform_location(shader_t* self, const char* uniform) {
 
 // TODO create probably a hashmap of sorts for all these uniform locations
 
-void shader_uniform_GLuint(GLuint location, GLuint uniform)
-{
+		/* it's important vector types cases (e.g. float[4]) come before their scalar counterparts */
+
+void shader_uniform_fvec4(gl_funcs_t* gl, GLuint location, float* uniform) {
+	gl->Uniform4fv(location, 1, uniform);
 }
 
-#define TYPEOF typeof(uniform)
-#define shader_uniform(location, uniform) shader_uniform_##TYPEOF((location), (uniform))
+void shader_uniform_mat4(gl_funcs_t* gl, GLuint location, matrix_t* uniform) {
+	gl->UniformMatrix4fv(location, 1, GL_FALSE, (float*) *uniform);
+}
+
+void shader_uniform_f(gl_funcs_t* gl, GLuint location, float uniform) {
+	gl->Uniform1f(location, uniform);
+}
+
+void shader_uniform_u(gl_funcs_t* gl, GLuint location, uint32_t uniform) {
+	gl->Uniform1i(location, uniform);
+}
+
+#define shader_uniform(location, uniform) \
+	_Generic((uniform), \
+		float*:    shader_uniform_fvec4, \
+		matrix_t*: shader_uniform_mat4, \
+		float:     shader_uniform_f, \
+		uint32_t:  shader_uniform_u \
+	)(gl, (location), (uniform))
