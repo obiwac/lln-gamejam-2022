@@ -3,6 +3,7 @@
 #include "log.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #include <xcb/xcb.h>
 #include <xcb/xcb_icccm.h>
@@ -37,6 +38,10 @@ typedef struct {
 	EGLDisplay* egl_display;
 	EGLContext* egl_context;
 	EGLSurface* egl_surface;
+
+	// timing stuff
+
+	struct timespec last_exposure;
 } win_t;
 
 static const char* egl_error_str(void) {
@@ -203,13 +208,37 @@ win_t* create_win(uint32_t x_res, uint32_t y_res) {
 	return self;
 }
 
-void win_loop(win_t* self, int (*draw_cb) (void* param), void* param) {
+void win_loop(win_t* self, int (*draw_cb) (void* param, float dt), void* param) {
 	for (xcb_generic_event_t* event; (event = xcb_wait_for_event(self->connection)); free(event)) {
 		int type = event->response_type & XCB_EVENT_RESPONSE_TYPE_MASK;
 
 		if (type == XCB_EXPOSE) {
-			draw_cb(param);
+			// get time between two frames
+
+			struct timespec now = { 0, 0 };
+			clock_gettime(CLOCK_MONOTONIC, &now);
+
+			float last_seconds = (float) self->last_exposure.tv_sec + 1.0e-9 * self->last_exposure.tv_nsec;
+			float now_seconds = (float) now.tv_sec + 1.0e-9 * now.tv_nsec;
+
+			memcpy(&self->last_exposure, &now, sizeof self->last_exposure);
+			float dt = now_seconds - last_seconds;
+
+			// draw & swap buffers
+
+			draw_cb(param, dt);
 			eglSwapBuffers(self->egl_display, self->egl_surface);
+
+			// invalidate by sending another expose event
+			// the X11 spec is as usual really unclear about how we're supposed to do this, but whatever, nothing new to see here
+
+			xcb_expose_event_t invalidate_event;
+
+			invalidate_event.window = self->window;
+			invalidate_event.response_type = XCB_EXPOSE;
+
+			xcb_send_event(self->connection, 0, self->window, XCB_EVENT_MASK_EXPOSURE, (const char*) &invalidate_event);
+			xcb_flush(self->connection);
 		}
 
 		else if (type == XCB_CLIENT_MESSAGE) {

@@ -23,8 +23,12 @@ typedef struct
 
 static object_t *testTriangle;
 
-int draw(void *param)
+static float x = 0;
+
+int draw(void *param, float dt)
 {
+	LOG("FPS: %f\n", 1 / dt)
+
 	game_t *self = param;
 	gl_funcs_t *gl = &self->gl;
 
@@ -40,9 +44,11 @@ int draw(void *param)
 
 	// model-view matrix
 
+	x += dt;
+
 	matrix_identity(self->mv_matrix);
 	matrix_translate(self->mv_matrix, (float[3]) { 0, 0, -1 });
-	matrix_rotate_2d(self->mv_matrix, (float[2]) { 6.28 / 6, 0 });
+	matrix_rotate_2d(self->mv_matrix, (float[2]) { x, sin(x * 5 / 3) / 3 });
 
 	// model-view-projection matrix
 
@@ -60,8 +66,10 @@ static void gl_func_not_loaded(void)
 	WARN("OpenGL function not yet loaded. Use 'GL_REQUIRE'.\n")
 }
 
-int main(void)
+int main(int argc, char** argv)
 {
+
+	// TODO debugging arguments for stuff like verbose logging
 
 	game_t game = {
 		.win = create_win(800, 480)};
