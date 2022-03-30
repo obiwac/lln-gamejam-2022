@@ -22,7 +22,7 @@ typedef struct
 } game_t;
 
 static object_t *testTriangle;
-
+static matrix_t mvp;
 int draw(void *param)
 {
 	game_t *self = param;
@@ -100,7 +100,13 @@ int main(void)
 	GL_REQUIRE(&game, Uniform1f)
 	GL_REQUIRE(&game, Uniform1i)
 
+<<<<<<< HEAD
 	shader_t* shader = create_shader(&game.gl, "default");
+=======
+	shader_t *shader = create_shader(&game.gl, "default");
+	game.mvp_matrix_uniform = shader_uniform_location(shader, "mvp_matrix");
+	game.tint_uniform = shader_uniform_location(shader, "tint");
+>>>>>>> 01124794c95b679419ec37686c5d0f8675b331a0
 
 	testTriangle = create_object(&game.gl, shader);
 
