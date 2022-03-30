@@ -2,6 +2,7 @@
 
 #include <malloc.h>
 #include <stdlib.h>
+#define STB_IMAGE_IMPLEMENTATION
 #include "../externals/stb_image.h"
 #include "shader.h"
 
@@ -18,13 +19,13 @@ typedef struct
 
 	shader_t *shader;
 } object_t;
-GLuint loadTexture2D(gl_funcs_t *gl, const char *texture)
+GLuint loadTexture2D(gl_funcs_t *gl, const char *texture_src)
 {
 	GLuint texture;
 	int width, height, channels;
-	unsigned char *data = stbi_load(texture, width, height, channels, STBI_rgb_alpha);
+	unsigned char *data = stbi_load(texture_src, &width, &height, &channels, STBI_rgb_alpha);
 	gl->GenTextures(1, &texture);
-	gl->BindTexture(GL_TEXTURE_2D, &texture);
+	gl->BindTexture(GL_TEXTURE_2D, texture);
 	gl->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER);
 	if (channels > 3)
 	{
@@ -34,6 +35,7 @@ GLuint loadTexture2D(gl_funcs_t *gl, const char *texture)
 	{
 		gl->TexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 	}
+
 	gl->BindTexture(GL_TEXTURE_2D, 0);
 	stbi_image_free(data);
 }
