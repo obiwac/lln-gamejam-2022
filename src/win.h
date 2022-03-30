@@ -20,6 +20,7 @@
 #include <GL/gl.h>
 
 typedef struct {
+	bool running;
 	uint32_t x_res, y_res;
 
 	// X11 stuff
@@ -83,6 +84,8 @@ void win_set_caption(win_t* self, char* caption) {
 
 win_t* create_win(uint32_t x_res, uint32_t y_res) {
 	win_t* self = calloc(1, sizeof *self);
+
+	self->running = true;
 
 	self->x_res = x_res;
 	self->y_res = y_res;
@@ -234,45 +237,39 @@ win_t* create_win(uint32_t x_res, uint32_t y_res) {
 	return self;
 }
 
-void win_loop(win_t* self, int (*draw_cb) (void* param, float dt), void* param) {
-	for (xcb_generic_event_t* event; (event = xcb_wait_for_event(self->connection)); free(event)) {
-		int type = event->response_type & XCB_EVENT_RESPONSE_TYPE_MASK;
+static inline void __process_event(win_t* self, int type, xcb_generic_event_t* event) {
+	if (type == XCB_CLIENT_MESSAGE) {
+		xcb_client_message_event_t* specific = (void*) event;
 
-		if (type == XCB_EXPOSE) {
-			// get time between two frames
-
-			struct timespec now = { 0, 0 };
-			clock_gettime(CLOCK_MONOTONIC, &now);
-
-			float last_seconds = (float) self->last_exposure.tv_sec + 1.0e-9 * self->last_exposure.tv_nsec;
-			float now_seconds = (float) now.tv_sec + 1.0e-9 * now.tv_nsec;
-
-			memcpy(&self->last_exposure, &now, sizeof self->last_exposure);
-			float dt = now_seconds - last_seconds;
-
-			// draw & swap buffers
-
-			draw_cb(param, dt);
-			eglSwapBuffers(self->egl_display, self->egl_surface);
-
-			// invalidate by sending another expose event
-			// the X11 spec is as usual really unclear about how we're supposed to do this, but whatever, nothing new to see here
-
-			xcb_expose_event_t invalidate_event;
-
-			invalidate_event.window = self->window;
-			invalidate_event.response_type = XCB_EXPOSE;
-
-			xcb_send_event(self->connection, 0, self->window, XCB_EVENT_MASK_EXPOSURE, (const char*) &invalidate_event);
-			xcb_flush(self->connection);
+		if (specific->data.data32[0] == self->wm_delete_window_atom) {
+			self->running = false;
 		}
+	}
+}
 
-		else if (type == XCB_CLIENT_MESSAGE) {
-			xcb_client_message_event_t* specific = (void*) event;
+void win_loop(win_t* self, int (*draw_cb) (void* param, float dt), void* param) {
+	while (self->running) {
+		// get time between two frames
 
-			if (specific->data.data32[0] == self->wm_delete_window_atom) {
-				break; // quit
-			}
+		struct timespec now = { 0, 0 };
+		clock_gettime(CLOCK_MONOTONIC, &now);
+
+		float last_seconds = (float) self->last_exposure.tv_sec + 1.0e-9 * self->last_exposure.tv_nsec;
+		float now_seconds = (float) now.tv_sec + 1.0e-9 * now.tv_nsec;
+
+		memcpy(&self->last_exposure, &now, sizeof self->last_exposure);
+		float dt = now_seconds - last_seconds;
+
+		// draw & swap buffers
+
+		draw_cb(param, dt);
+		eglSwapBuffers(self->egl_display, self->egl_surface);
+
+		// process events
+
+	for (xcb_generic_event_t* event; (event = xcb_poll_for_event(self->connection)); free(event)) {
+			int type = event->response_type & XCB_EVENT_RESPONSE_TYPE_MASK;
+			__process_event(self, type, event);
 		}
 	}
 }
