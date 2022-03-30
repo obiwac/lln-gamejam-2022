@@ -145,6 +145,15 @@ win_t* create_win(uint32_t x_res, uint32_t y_res) {
 
 	win_set_caption(self, "Gamejam 2022");
 
+	// set sensible minimum and maximum sizes for the window
+
+	xcb_size_hints_t hints = { 0 };
+
+	xcb_icccm_size_hints_set_min_size(&hints, 320, 200);
+	// no maximum size
+
+	xcb_icccm_set_wm_size_hints(self->connection, self->window, XCB_ATOM_WM_NORMAL_HINTS, &hints);
+
 	// create context with EGL
 
 	if (!eglBindAPI(EGL_OPENGL_ES_API)) {
