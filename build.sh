@@ -7,4 +7,5 @@ mkdir -p bin
 
 cc -g -std=c99 src/main.c -o bin/out \
 	-I/usr/local/include -L/usr/local/lib \
+	-lm -pthread \
 	-lxcb -lxcb-icccm -lX11 -lX11-xcb -lEGL

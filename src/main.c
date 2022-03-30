@@ -7,12 +7,18 @@
 #include "shader.h"
 #include "object.h"
 
+#include "matrix.h"
+
 #define GL_REQUIRE(game, name) (game)->gl.name = (void *)eglGetProcAddress("gl" #name);
 
 typedef struct
 {
 	win_t *win;
 	gl_funcs_t gl;
+
+	matrix_t p_matrix;
+	matrix_t mv_matrix;
+	matrix_t mvp_matrix;
 } game_t;
 
 static object_t *testTriangle;
@@ -26,6 +32,22 @@ int draw(void *param)
 	gl->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	shader_uniform(testTriangle->shader, "tint", ((float[4]) { 0.0, 0.0, 1.0, 1.0 }));
+
+	// projection matrix
+
+	matrix_identity(self->p_matrix);
+	matrix_perspective(self->p_matrix, 90, 800.0 / 480, 0.1, 500);
+
+	// model-view matrix
+
+	matrix_identity(self->mv_matrix);
+	matrix_translate(self->mv_matrix, (float[3]) { 0, 0, -1 });
+
+	// model-view-projection matrix
+
+	matrix_multiply(self->mvp_matrix, self->p_matrix, self->mv_matrix);
+
+	shader_uniform(testTriangle->shader, "mvp_matrix", &self->mvp_matrix);
 
 	render_object(gl, testTriangle);
 
