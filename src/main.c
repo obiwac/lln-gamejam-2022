@@ -117,6 +117,7 @@ int main(int argc, char** argv)
 	GL_REQUIRE(&game, Uniform1f)
 	GL_REQUIRE(&game, Uniform1i)
 	GL_REQUIRE(&game, Viewport)
+	GL_REQUIRE(&game, DrawElements)
 
 	shader_t* shader = create_shader(&game.gl, "default");
 

@@ -48,6 +48,7 @@ object_t *create_object(gl_funcs_t *gl, shader_t *shader)
 		-0.5f, -0.5f, 0.0f,
 		0.5f, -0.5f, 0.0f,
 		0.0f, 0.5f, 0.0f};
+	unsigned int indices[3] = {0,1,2};
 	gl->GenVertexArrays(1, &self->vao);
 	gl->GenBuffers(1, &self->vbo);
 	gl->BindVertexArray(self->vao);
@@ -55,9 +56,14 @@ object_t *create_object(gl_funcs_t *gl, shader_t *shader)
 	gl->BindBuffer(GL_ARRAY_BUFFER, self->vbo);
 	gl->BufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+	
+
+	gl->GenBuffers(1,&self->ibo);
+	gl->BindBuffer(GL_ELEMENT_ARRAY_BUFFER,self->ibo);
+	gl->BufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(indices),indices,GL_STATIC_DRAW);
+	
 	gl->VertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
 	gl->EnableVertexAttribArray(0);
-
 	return self;
 }
 
@@ -83,7 +89,8 @@ void render_object(gl_funcs_t *gl, object_t *self)
 {
 	shader_use(self->shader);
 	gl->BindVertexArray(self->vao);
-	gl->DrawArrays(GL_TRIANGLES, 0, 3);
+	gl->DrawElements(GL_TRIANGLES, 3,GL_UNSIGNED_INT,0);
+	gl->BindVertexArray(0);
 
 	GLuint location = 0; // TODO
 
