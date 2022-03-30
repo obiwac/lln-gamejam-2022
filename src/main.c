@@ -78,7 +78,10 @@ int main(int argc, char** argv)
 	// TODO debugging arguments for stuff like verbose logging
 
 	game_t game = {
-		.win = create_win(800, 480)};
+		.win = create_win(800, 480)
+	};
+
+	game.win->gl = &game.gl;
 
 	// load OpenGL functions manually
 
@@ -113,6 +116,7 @@ int main(int argc, char** argv)
 	GL_REQUIRE(&game, Uniform4fv)
 	GL_REQUIRE(&game, Uniform1f)
 	GL_REQUIRE(&game, Uniform1i)
+	GL_REQUIRE(&game, Viewport)
 
 	shader_t* shader = create_shader(&game.gl, "default");
 

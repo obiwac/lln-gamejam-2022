@@ -38,6 +38,8 @@ typedef struct {
 
 	// EGL stuff
 
+	gl_funcs_t* gl;
+
 	EGLDisplay* egl_display;
 	EGLContext* egl_context;
 	EGLSurface* egl_surface;
@@ -115,7 +117,10 @@ win_t* create_win(uint32_t x_res, uint32_t y_res) {
 	// create window
 
 	const uint32_t window_attribs[] = {
-		XCB_EVENT_MASK_EXPOSURE,
+		XCB_EVENT_MASK_STRUCTURE_NOTIFY |
+		XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE |
+		XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW | XCB_EVENT_MASK_POINTER_MOTION |
+		XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE,
 	};
 
 	self->window = xcb_generate_id(self->connection);
@@ -238,12 +243,23 @@ win_t* create_win(uint32_t x_res, uint32_t y_res) {
 }
 
 static inline void __process_event(win_t* self, int type, xcb_generic_event_t* event) {
+	gl_funcs_t* gl = self->gl;
+
 	if (type == XCB_CLIENT_MESSAGE) {
 		xcb_client_message_event_t* specific = (void*) event;
 
 		if (specific->data.data32[0] == self->wm_delete_window_atom) {
 			self->running = false;
 		}
+	}
+
+	else if (type == XCB_CONFIGURE_NOTIFY) {
+		xcb_configure_notify_event_t* detail = (void*) event;
+
+		self->x_res = detail->width;
+		self->y_res = detail->height;
+
+		gl->Viewport(0, 0, self->x_res, self->y_res);
 	}
 }
 
@@ -267,7 +283,7 @@ void win_loop(win_t* self, int (*draw_cb) (void* param, float dt), void* param) 
 
 		// process events
 
-	for (xcb_generic_event_t* event; (event = xcb_poll_for_event(self->connection)); free(event)) {
+		for (xcb_generic_event_t* event; (event = xcb_poll_for_event(self->connection)); free(event)) {
 			int type = event->response_type & XCB_EVENT_RESPONSE_TYPE_MASK;
 			__process_event(self, type, event);
 		}
