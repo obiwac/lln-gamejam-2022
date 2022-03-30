@@ -6,8 +6,9 @@
 #include <string.h>
 
 #include <xcb/xcb.h>
-#include <xcb/xcb_icccm.h>
 #include <xcb/xcb_event.h>
+#include <xcb/xcb_ewmh.h>
+#include <xcb/xcb_icccm.h>
 
 // unfortunately, you can't use pure XCB with EGL/GLX:
 // https://xcb.freedesktop.org/opengl/
@@ -32,6 +33,7 @@ typedef struct {
 	xcb_drawable_t window;
 	
 	xcb_atom_t wm_delete_window_atom;
+	xcb_ewmh_connection_t ewmh;
 
 	// EGL stuff
 
@@ -72,6 +74,11 @@ static const char* egl_error_str(void) {
 	}
 
 	#undef ERROR_CASE
+}
+
+void win_set_caption(win_t* self, char* caption) {
+	xcb_ewmh_set_wm_name(&self->ewmh, self->window, strlen(caption) + 1, caption);
+	xcb_flush(self->connection);
 }
 
 win_t* create_win(uint32_t x_res, uint32_t y_res) {
@@ -128,7 +135,17 @@ win_t* create_win(uint32_t x_res, uint32_t y_res) {
 
 	xcb_icccm_set_wm_protocols(self->connection, self->window, wm_protocols_atom, 1, &self->wm_delete_window_atom);
 
-	// TODO set window caption & other stuff
+	// EWMH
+
+	xcb_intern_atom_cookie_t* cookies = xcb_ewmh_init_atoms(self->connection, &self->ewmh);
+
+	if (!xcb_ewmh_init_atoms_replies(&self->ewmh, cookies, NULL)) {
+		FATAL_ERROR("Failed to get EWMH atoms\n")
+	}
+
+	win_set_caption(self, "Gamejam 2022");
+
+	// create context with EGL
 
 	if (!eglBindAPI(EGL_OPENGL_ES_API)) {
 		FATAL_ERROR("Failed to bind EGL API (%s)\n", egl_error_str())

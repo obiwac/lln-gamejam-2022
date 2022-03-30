@@ -4,7 +4,7 @@ Preparations for the 2022 Louvain-li-Nux gamejam.
 
 ## Idea
 
-We want to build this game as much from the ground up as possible, so it'll be entirely written in standard C11 with a custom OpenGL loader & engine, direct communication with the X11 windowing system through XCB (and context creation through EGL), and a custom physics engine.
+We want to build this game as much from the ground up as possible (within reason), so it'll be entirely written in standard C11 with a custom OpenGL loader & engine, direct communication with the X11 windowing system through XCB (and context creation through EGL), and a custom physics engine.
 
 ## Building
 

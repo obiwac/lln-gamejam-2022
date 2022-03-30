@@ -27,10 +27,16 @@ static float x = 0;
 
 int draw(void *param, float dt)
 {
-	LOG("FPS: %f\n", 1 / dt)
-
 	game_t *self = param;
 	gl_funcs_t *gl = &self->gl;
+
+	LOG("FPS: %f\n", 1 / dt)
+
+	char caption[256];
+	snprintf(caption, sizeof caption, "Gamejam 2022 (%d FPS)", (int) (1 / dt));
+	win_set_caption(self->win, caption);
+
+	// clear buffers
 
 	gl->ClearColor(1.0, 0.0, 1.0, 1.0);
 	gl->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
