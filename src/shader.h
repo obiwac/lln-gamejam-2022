@@ -125,18 +125,13 @@ error:
 
 void shader_use(shader_t *self)
 {
-	self->gl->BindAttribLocation(self->program, 0, "position");
 	self->gl->UseProgram(self->program);
-	printf("TODO %s\n", __func__);
 }
 
 GLuint shader_uniform_location(shader_t* self, const char* uniform) {
+	shader_use(self);
 	return self->gl->GetUniformLocation(self->program, uniform);
 }
-
-// TODO create probably a hashmap of sorts for all these uniform locations
-
-		/* it's important vector types cases (e.g. float[4]) come before their scalar counterparts */
 
 void shader_uniform_fvec4(gl_funcs_t* gl, GLuint location, float* uniform) {
 	gl->Uniform4fv(location, 1, uniform);
@@ -154,10 +149,10 @@ void shader_uniform_u(gl_funcs_t* gl, GLuint location, uint32_t uniform) {
 	gl->Uniform1i(location, uniform);
 }
 
-#define shader_uniform(location, uniform) \
+#define shader_uniform(shader, location, uniform) \
 	_Generic((uniform), \
 		float*:    shader_uniform_fvec4, \
 		matrix_t*: shader_uniform_mat4, \
 		float:     shader_uniform_f, \
 		uint32_t:  shader_uniform_u \
-	)(gl, (location), (uniform))
+	)((shader)->gl, shader_uniform_location((shader), (location)), (uniform))
