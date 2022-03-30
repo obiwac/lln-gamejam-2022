@@ -36,7 +36,7 @@ int draw(void *param)
 	// projection matrix
 
 	matrix_identity(self->p_matrix);
-	matrix_perspective(self->p_matrix, 90, 800.0 / 480, 0.1, 500);
+	matrix_perspective(self->p_matrix, 90, (float) self->win->x_res / self->win->y_res, 0.1, 500);
 
 	// model-view matrix
 
