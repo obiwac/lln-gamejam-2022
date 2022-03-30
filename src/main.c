@@ -42,6 +42,7 @@ int draw(void *param)
 
 	matrix_identity(self->mv_matrix);
 	matrix_translate(self->mv_matrix, (float[3]) { 0, 0, -1 });
+	matrix_rotate_2d(self->mv_matrix, (float[2]) { 6.28 / 6, 0 });
 
 	// model-view-projection matrix
 
