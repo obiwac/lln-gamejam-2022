@@ -19,7 +19,7 @@ typedef struct
 } game_t;
 
 static object_t *testTriangle;
-
+static matrix_t mvp;
 int draw(void *param)
 {
 	game_t *self = param;
@@ -27,8 +27,9 @@ int draw(void *param)
 
 	gl->ClearColor(1.0, 0.0, 1.0, 1.0);
 	gl->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	shader_uniform(self->tint_uniform, ((float[4]) { 0.0, 0.0, 1.0, 1.0 }));
+	matrix_identity(mvp);
+	shader_uniform(self->tint_uniform, ((float[4]){0.0, 0.0, 1.0, 1.0}));
+	shader_uniform(self->mvp_matrix_uniform, &mvp);
 
 	render_object(gl, testTriangle);
 
@@ -80,7 +81,7 @@ int main(void)
 	GL_REQUIRE(&game, Uniform1f)
 	GL_REQUIRE(&game, Uniform1i)
 
-	shader_t* shader = create_shader(&game.gl, "default");
+	shader_t *shader = create_shader(&game.gl, "default");
 	game.mvp_matrix_uniform = shader_uniform_location(shader, "mvp_matrix");
 	game.tint_uniform = shader_uniform_location(shader, "tint");
 
