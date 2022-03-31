@@ -2,8 +2,6 @@
 
 #include <malloc.h>
 #include <stdlib.h>
-#define STB_IMAGE_IMPLEMENTATION
-#include "../externals/stb_image.h"
 #include "shader.h"
 
 
@@ -30,37 +28,11 @@ typedef struct
 } object_t;
 
 static object_t* object_a[255];
+static unsigned int render_object_count = 0;
 static unsigned int object_count = 0;
 
-GLuint loadTexture2D(gl_funcs_t *gl, const char *texture_src)
-{
-	GLuint texture;
-	int width, height, channels;
-	unsigned char *data = stbi_load(texture_src, &width, &height, &channels, STBI_rgb_alpha); 
-	if(!data)
-		LOG("Error while loading image: %s",texture_src)
-	gl->GenTextures(1, &texture); 
-	gl->BindTexture(GL_TEXTURE_2D, texture);
-	gl->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
-	gl->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	gl->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	gl->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	if (channels > 3)
-	{
-		gl->TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-	}
-	else
-	{
-		gl->TexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-	}
-	gl->GenerateMipmap(GL_TEXTURE_2D);
 
-	gl->BindTexture(GL_TEXTURE_2D, 0);
-	stbi_image_free(data);
-	return texture;
-}
-
-object_t *create_object(gl_funcs_t *gl, shader_t *shader)
+object_t *create_object(gl_funcs_t *gl, shader_t *shader,bool auto_render)
 {
 	object_t *self = (object_t *)calloc(1, sizeof(*self));
 
@@ -109,7 +81,10 @@ object_t *create_object(gl_funcs_t *gl, shader_t *shader)
 		self->transform.rotation[i] = 1;
 		self->transform.scale[i] = 1;
 	}
-	object_a[object_count] = self;
+	if(auto_render){
+	object_a[render_object_count] = self;
+	render_object_count++;
+	}
 	object_count++;
 	return self;
 }

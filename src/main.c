@@ -6,6 +6,7 @@
 #include "vertex.h"
 #include "shader.h"
 #include "object.h"
+#include "texture.h"
 
 #include "matrix.h"
 
@@ -131,7 +132,7 @@ int main(int argc, char** argv)
 	shader_t* shader = create_shader(&game.gl, "default");
 
 	object_t *testTriangle;
-	testTriangle = create_object(&game.gl, shader);
+	testTriangle = create_object(&game.gl, shader,true);
 	testTriangle->tex_albedo = loadTexture2D(&game.gl,"rsc/Textures/checkboard.png");
 
 
