@@ -72,7 +72,7 @@ int compile_shader(gl_funcs_t *gl, GLuint shader, const char *src)
 	gl->GetShaderInfoLog(shader, log_len, NULL, log_buf);
 
 	if (log_len) {
-		WARN("Shader failed to compile: %s\n", log_buf)
+		WARN("%s failed to compile: %s\n", src,log_buf)
 		goto error;
 	}
 

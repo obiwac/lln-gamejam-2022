@@ -5,6 +5,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "../externals/stb_image.h"
 #include "shader.h"
+
+
 typedef struct 
 {
 	float translation[3];
@@ -26,6 +28,10 @@ typedef struct
 	shader_t *shader;
 	transform_t transform;
 } object_t;
+
+static object_t* object_a[255];
+static unsigned int object_count = 0;
+
 GLuint loadTexture2D(gl_funcs_t *gl, const char *texture_src)
 {
 	GLuint texture;
@@ -65,12 +71,7 @@ object_t *create_object(gl_funcs_t *gl, shader_t *shader)
 	 	{.position = {0.5f, -0.5f, 0.0f},.texcoord = {1.0f,0.0f},.normal ={1.0f,1.0f,1.0f}},
 	 	{.position = {0.0f, 0.5f, 0.0f},.texcoord = {0.5f,1.0f},.normal ={1.0f,1.0f,1.0f}},
 	 };
-	/*vertex_t vert[] = 
-	 {
-	 	{.position = {-0.5f, -0.5f, 0.0f}},
-	 	{.position = {0.5f, -0.5f, 0.0f}},
-	 	{.position = {0.0f, 0.5f, 0.0f}},
-	 };*/
+
 
 	unsigned int indices[3] = {0,1,2};
 	gl->GenVertexArrays(1, &self->vao);
@@ -108,7 +109,8 @@ object_t *create_object(gl_funcs_t *gl, shader_t *shader)
 		self->transform.rotation[i] = 1;
 		self->transform.scale[i] = 1;
 	}
-
+	object_a[object_count] = self;
+	object_count++;
 	return self;
 }
 

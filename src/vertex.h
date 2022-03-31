@@ -3,5 +3,6 @@
 typedef struct
 {
     float position[3];
-    float normal[2];
+    float texcoord[2];
+    float normal[3];
 } vertex_t;
