@@ -38,7 +38,7 @@ int draw(void *param, float dt)
 
 	// clear buffers
 
-	gl->ClearColor(1.0, 0.0, 1.0, 1.0);
+	gl->ClearColor(0.1, 0.1, 0.1, 1.0);
 	gl->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	shader_uniform(testTriangle->shader, "tint", ((float[4]) { 0.0, 0.0, 1.0, 1.0 }));
@@ -56,11 +56,16 @@ int draw(void *param, float dt)
 	matrix_translate(self->mv_matrix, (float[3]) { 0, 0, -1 });
 	matrix_rotate_2d(self->mv_matrix, (float[2]) { x, sin(x * 5 / 3) / 3 });
 
+
 	// model-view-projection matrix
 
 	matrix_multiply(self->mvp_matrix, self->p_matrix, self->mv_matrix);
-
+	
 	shader_uniform(testTriangle->shader, "mvp_matrix", &self->mvp_matrix);
+
+	//Set textures
+	gl->ActiveTexture(GL_TEXTURE0);
+	gl->BindTexture(GL_TEXTURE_2D,testTriangle->tex_albedo);
 
 	render_object(gl, testTriangle);
 
@@ -118,10 +123,19 @@ int main(int argc, char** argv)
 	GL_REQUIRE(&game, Uniform1i)
 	GL_REQUIRE(&game, Viewport)
 	GL_REQUIRE(&game, DrawElements)
+	GL_REQUIRE(&game, BindTexture)
+	GL_REQUIRE(&game, TexImage2D)
+	GL_REQUIRE(&game, GenTextures)
+	GL_REQUIRE(&game, TexParameteri)
+	GL_REQUIRE(&game, ActiveTexture)
+	GL_REQUIRE(&game, GenerateMipmap)
 
 	shader_t* shader = create_shader(&game.gl, "default");
-
+	
 	testTriangle = create_object(&game.gl, shader);
+	
+	//Load Checkboard texture for the triangle:
+	testTriangle->tex_albedo = loadTexture2D(&game.gl,"rsc/Textures/checkboard.png");
 
 	win_loop(game.win, draw, &game);
 
