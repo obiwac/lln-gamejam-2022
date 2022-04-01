@@ -23,6 +23,8 @@ typedef struct
 	GLuint tex_roughness;
 	GLuint tex_emission;
 
+	unsigned int indice_count;
+
 	shader_t *shader;
 	transform_t transform;
 } object_t;
@@ -32,33 +34,26 @@ static unsigned int render_object_count = 0;
 static unsigned int object_count = 0;
 
 
-object_t *create_object(gl_funcs_t *gl, shader_t *shader,bool auto_render)
+object_t *create_object(gl_funcs_t *gl, shader_t *shader,bool auto_render,vertex_t*vert,unsigned int vert_size,unsigned int* indices,unsigned int indice_size)
 {
 	object_t *self = (object_t *)calloc(1, sizeof(*self));
 
 	self->shader = shader;
-	 vertex_t vert[] = 
-	 {
-	 	{.position = {-0.5f, -0.5f, 0.0f},.texcoord = {0.0f,0.0f},.normal ={1.0f,1.0f,1.0f}},
-	 	{.position = {0.5f, -0.5f, 0.0f},.texcoord = {1.0f,0.0f},.normal ={1.0f,1.0f,1.0f}},
-	 	{.position = {0.0f, 0.5f, 0.0f},.texcoord = {0.5f,1.0f},.normal ={1.0f,1.0f,1.0f}},
-	 };
 
-
-	unsigned int indices[3] = {0,1,2};
 	gl->GenVertexArrays(1, &self->vao);
 	gl->GenBuffers(1, &self->vbo);
 	gl->BindVertexArray(self->vao);
 
 	gl->BindBuffer(GL_ARRAY_BUFFER, self->vbo);
-	printf("%i \n",sizeof(vert));
-	gl->BufferData(GL_ARRAY_BUFFER, sizeof(vert), vert, GL_STATIC_DRAW);
+	printf("%i \n",vert_size);
+	printf("%i \n",indice_size);
+	gl->BufferData(GL_ARRAY_BUFFER, vert_size, vert, GL_STATIC_DRAW);
 
 	//Ulgy but simple :)
 
 	gl->GenBuffers(1,&self->ibo);
 	gl->BindBuffer(GL_ELEMENT_ARRAY_BUFFER,self->ibo);
-	gl->BufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(indices),indices,GL_STATIC_DRAW);
+	gl->BufferData(GL_ELEMENT_ARRAY_BUFFER,indice_size,indices,GL_STATIC_DRAW);
 	
 
 	//Position
@@ -85,6 +80,9 @@ object_t *create_object(gl_funcs_t *gl, shader_t *shader,bool auto_render)
 	object_a[render_object_count] = self;
 	render_object_count++;
 	}
+
+	self->indice_count = indice_size;
+
 	object_count++;
 	return self;
 }
@@ -111,7 +109,7 @@ void render_object(gl_funcs_t *gl, object_t *self)
 {
 	shader_use(self->shader);
 	gl->BindVertexArray(self->vao);
-	gl->DrawElements(GL_TRIANGLES, 3,GL_UNSIGNED_INT,0);
+	gl->DrawElements(GL_TRIANGLES, self->indice_count,GL_UNSIGNED_INT,0);
 	gl->BindVertexArray(0);
 
 	GLuint location = 0; // TODO
