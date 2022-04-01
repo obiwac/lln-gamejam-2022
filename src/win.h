@@ -32,7 +32,7 @@ typedef struct {
 	xcb_screen_t* screen;
 
 	xcb_drawable_t window;
-	
+
 	xcb_atom_t wm_delete_window_atom;
 	xcb_ewmh_connection_t ewmh;
 
@@ -111,7 +111,7 @@ win_t* create_win(uint32_t x_res, uint32_t y_res) {
 
 	xcb_screen_iterator_t it = xcb_setup_roots_iterator(xcb_get_setup(self->connection));
 	for (int i = self->default_screen; it.rem && i > 0; i--, xcb_screen_next(&it));
-	
+
 	self->screen = it.data;
 
 	// create window
@@ -130,7 +130,7 @@ win_t* create_win(uint32_t x_res, uint32_t y_res) {
 		0, 0, x_res, y_res, 0, // window geometry
 		XCB_WINDOW_CLASS_INPUT_OUTPUT, self->screen->root_visual,
 		XCB_CW_EVENT_MASK, window_attribs);
-	
+
 	xcb_map_window(self->connection, self->window);
 
 	// setup 'WM_DELETE_WINDOW' protocol (yes this is dumb, thank you XCB & X11)
@@ -234,7 +234,7 @@ win_t* create_win(uint32_t x_res, uint32_t y_res) {
 	}
 
 	EGLint render_buffer;
-	
+
 	if (!eglQueryContext(self->egl_display, self->egl_context, EGL_RENDER_BUFFER, &render_buffer) || render_buffer == EGL_SINGLE_BUFFER) {
 		WARN("EGL surface is single buffered (%s)\n", egl_error_str())
 	}
@@ -260,6 +260,17 @@ static inline void __process_event(win_t* self, int type, xcb_generic_event_t* e
 		self->y_res = detail->height;
 
 		gl->Viewport(0, 0, self->x_res, self->y_res);
+	}
+
+	else if (type == XCB_KEY_PRESS) {
+		xcb_key_press_event_t* detail = (void*) event;
+		xcb_keycode_t key = detail->detail;
+
+		// you can get keycodes for this shit quite easily with the 'xev' tool
+
+		if (key == 9 /* ESC */) {
+			self->running = false;
+		}
 	}
 }
 
