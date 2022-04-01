@@ -31,10 +31,12 @@ typedef struct {
 	xcb_connection_t* connection;
 	xcb_screen_t* screen;
 
-	xcb_drawable_t window;
+	xcb_drawable_t win;
 
 	xcb_atom_t wm_delete_window_atom;
 	xcb_ewmh_connection_t ewmh;
+
+	bool exclusive_mouse;
 
 	// EGL stuff
 
@@ -80,7 +82,51 @@ static const char* egl_error_str(void) {
 }
 
 void win_set_caption(win_t* self, char* caption) {
-	xcb_ewmh_set_wm_name(&self->ewmh, self->window, strlen(caption) + 1, caption);
+	xcb_ewmh_set_wm_name(&self->ewmh, self->win, strlen(caption) + 1, caption);
+	xcb_flush(self->connection);
+}
+
+void win_set_mouse_pos(win_t* self, uint32_t x, uint32_t y) {
+	if (x == -1 || y == -1) {
+		x = self->x_res / 2;
+		y = self->y_res / 2;
+	}
+
+	y = self->y_res - y; // side-note: systems which consider top-left to be the origin are dumb
+
+	xcb_warp_pointer(self->connection, 0, self->win, 0, 0, 0, 0, x, y);
+}
+
+void win_set_exclusive_mouse(win_t* self, bool exclusive) {
+	self->exclusive_mouse = exclusive;
+
+	// grab/ungrab pointer & show/hide cursor
+	// yes, this is needlessly complicated and hacky, thank you X11 😞
+	// basically, what I'm doing is create a new cursor with an empty pixmap in it
+
+	if (exclusive) {
+		xcb_pixmap_t empty_pixmap = xcb_generate_id(self->connection);
+		xcb_create_pixmap(self->connection, 1, empty_pixmap, self->win, 1, 1);
+
+		xcb_cursor_t cursor = xcb_generate_id(self->connection);
+		xcb_create_cursor(self->connection, cursor, empty_pixmap, empty_pixmap, 0, 0, 0, 0, 0, 0, 0, 0);
+
+		xcb_grab_pointer(self->connection, true, self->win, 0, XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC, self->win, cursor, XCB_CURRENT_TIME);
+
+		xcb_free_pixmap(self->connection, empty_pixmap);
+		xcb_free_cursor(self->connection, cursor);
+
+		// grab focus if the WM doesn't do it for us (bug in aquaBSD WM)
+
+		xcb_set_input_focus(self->connection, XCB_INPUT_FOCUS_PARENT, self->win, XCB_CURRENT_TIME);
+	}
+
+	else {
+		xcb_ungrab_pointer(self->connection, XCB_CURRENT_TIME);
+		xcb_change_window_attributes(self->connection, self->win, XCB_CW_CURSOR, (uint32_t[]) { 0 });
+	}
+
+	win_set_mouse_pos(self, -1, -1);
 	xcb_flush(self->connection);
 }
 
@@ -123,15 +169,15 @@ win_t* create_win(uint32_t x_res, uint32_t y_res) {
 		XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE,
 	};
 
-	self->window = xcb_generate_id(self->connection);
+	self->win = xcb_generate_id(self->connection);
 
 	xcb_create_window(
-		self->connection, XCB_COPY_FROM_PARENT, self->window, self->screen->root,
+		self->connection, XCB_COPY_FROM_PARENT, self->win, self->screen->root,
 		0, 0, x_res, y_res, 0, // window geometry
 		XCB_WINDOW_CLASS_INPUT_OUTPUT, self->screen->root_visual,
 		XCB_CW_EVENT_MASK, window_attribs);
 
-	xcb_map_window(self->connection, self->window);
+	xcb_map_window(self->connection, self->win);
 
 	// setup 'WM_DELETE_WINDOW' protocol (yes this is dumb, thank you XCB & X11)
 
@@ -141,7 +187,7 @@ win_t* create_win(uint32_t x_res, uint32_t y_res) {
 	xcb_intern_atom_cookie_t wm_delete_window_cookie = xcb_intern_atom(self->connection, 0, 16 /* strlen("WM_DELETE_WINDOW") */, "WM_DELETE_WINDOW");
 	self->wm_delete_window_atom = xcb_intern_atom_reply(self->connection, wm_delete_window_cookie, 0)->atom;
 
-	xcb_icccm_set_wm_protocols(self->connection, self->window, wm_protocols_atom, 1, &self->wm_delete_window_atom);
+	xcb_icccm_set_wm_protocols(self->connection, self->win, wm_protocols_atom, 1, &self->wm_delete_window_atom);
 
 	// EWMH
 
@@ -151,8 +197,6 @@ win_t* create_win(uint32_t x_res, uint32_t y_res) {
 		FATAL_ERROR("Failed to get EWMH atoms\n")
 	}
 
-	win_set_caption(self, "Gamejam 2022");
-
 	// set sensible minimum and maximum sizes for the window
 
 	xcb_size_hints_t hints = { 0 };
@@ -160,7 +204,12 @@ win_t* create_win(uint32_t x_res, uint32_t y_res) {
 	xcb_icccm_size_hints_set_min_size(&hints, 320, 200);
 	// no maximum size
 
-	xcb_icccm_set_wm_size_hints(self->connection, self->window, XCB_ATOM_WM_NORMAL_HINTS, &hints);
+	xcb_icccm_set_wm_size_hints(self->connection, self->win, XCB_ATOM_WM_NORMAL_HINTS, &hints);
+
+	// extra window setup
+
+	win_set_caption(self, "Gamejam 2022");
+	win_set_exclusive_mouse(self, true);
 
 	// create context with EGL
 
@@ -223,7 +272,7 @@ win_t* create_win(uint32_t x_res, uint32_t y_res) {
 		EGL_NONE
 	};
 
-	self->egl_surface = eglCreateWindowSurface(self->egl_display, config, self->window, surface_attribs);
+	self->egl_surface = eglCreateWindowSurface(self->egl_display, config, self->win, surface_attribs);
 
 	if (!self->egl_surface) {
 		FATAL_ERROR("Failed to create EGL surface (%s)\n", egl_error_str())
@@ -269,7 +318,7 @@ static inline void __process_event(win_t* self, int type, xcb_generic_event_t* e
 		// you can get keycodes for this shit quite easily with the 'xev' tool
 
 		if (key == 9 /* ESC */) {
-			self->running = false;
+			win_set_exclusive_mouse(self, false);
 		}
 	}
 }
@@ -286,6 +335,12 @@ void win_loop(win_t* self, int (*draw_cb) (void* param, float dt), void* param) 
 
 		memcpy(&self->last_exposure, &now, sizeof self->last_exposure);
 		float dt = now_seconds - last_seconds;
+
+		// continiously centre the mouse if it's exclusive to us
+
+		if (self->exclusive_mouse) {
+			win_set_mouse_pos(self, -1, -1);
+		}
 
 		// draw & swap buffers
 
