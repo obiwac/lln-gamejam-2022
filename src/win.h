@@ -36,8 +36,6 @@ typedef struct {
 	xcb_atom_t wm_delete_window_atom;
 	xcb_ewmh_connection_t ewmh;
 
-	bool exclusive_mouse;
-
 	// EGL stuff
 
 	gl_funcs_t* gl;
@@ -49,6 +47,11 @@ typedef struct {
 	// timing stuff
 
 	struct timespec last_exposure;
+
+	// mouse event stuff
+
+	bool exclusive_mouse;
+	int mouse_dx, mouse_dy;
 } win_t;
 
 static const char* egl_error_str(void) {
@@ -98,6 +101,10 @@ void win_set_mouse_pos(win_t* self, uint32_t x, uint32_t y) {
 }
 
 void win_set_exclusive_mouse(win_t* self, bool exclusive) {
+	if (self->exclusive_mouse == exclusive) {
+		return;
+	}
+
 	self->exclusive_mouse = exclusive;
 
 	// grab/ungrab pointer & show/hide cursor
@@ -321,6 +328,13 @@ static inline void __process_event(win_t* self, int type, xcb_generic_event_t* e
 			win_set_exclusive_mouse(self, false);
 		}
 	}
+
+	else if (type == XCB_MOTION_NOTIFY) {
+		xcb_motion_notify_event_t* detail = (void*) event;
+
+		self->mouse_dx = detail->event_x - self->x_res / 2;
+		self->mouse_dy = detail->event_y - self->y_res / 2;
+	}
 }
 
 void win_loop(win_t* self, int (*draw_cb) (void* param, float dt), void* param) {
@@ -337,9 +351,15 @@ void win_loop(win_t* self, int (*draw_cb) (void* param, float dt), void* param) 
 		float dt = now_seconds - last_seconds;
 
 		// continiously centre the mouse if it's exclusive to us
+		// otherwise, ignore any mouse movement
 
 		if (self->exclusive_mouse) {
 			win_set_mouse_pos(self, -1, -1);
+		}
+
+		else {
+			self->mouse_dx = 0;
+			self->mouse_dy = 0;
 		}
 
 		// draw & swap buffers

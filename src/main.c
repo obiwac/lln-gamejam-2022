@@ -22,7 +22,7 @@ typedef struct
 	matrix_t mvp_matrix;
 } game_t;
 
-static float x = 0;
+static float x, y = 0;
 
 int draw(void *param, float dt)
 {
@@ -43,12 +43,13 @@ int draw(void *param, float dt)
 	matrix_identity(self->p_matrix);
 	matrix_perspective(self->p_matrix, 90, (float) self->win->x_res / self->win->y_res, 0.1, 500);
 
+	x += self->win->mouse_dx / 100.0;
+	y -= self->win->mouse_dy / 100.0;
 
-	x += dt;
 	// model-view matrix
 	matrix_identity(self->mv_matrix);
 	matrix_translate(self->mv_matrix, (float[3]) { 0, 0, -1 });
-	matrix_rotate_2d(self->mv_matrix, (float[2]) { x, sin(x * 5 / 3) / 3 });
+	matrix_rotate_2d(self->mv_matrix, (float[2]) { x, y });
 
 
 	// model-view-projection matrix
@@ -64,9 +65,9 @@ int draw(void *param, float dt)
 
 	}
 
-	
 
-	
+
+
 
 	return 0;
 }
