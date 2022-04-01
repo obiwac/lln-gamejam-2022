@@ -34,7 +34,7 @@ static unsigned int render_object_count = 0;
 static unsigned int object_count = 0;
 
 
-object_t *create_object(gl_funcs_t *gl, shader_t *shader,bool auto_render,vertex_t*vert,unsigned int vert_size,unsigned int* indices,unsigned int indice_size)
+object_t *create_object(gl_funcs_t *gl, shader_t *shader,bool auto_render,vertex_t *vert,unsigned int vert_size,unsigned int* indices,unsigned int indice_size)
 {
 	object_t *self = (object_t *)calloc(1, sizeof(*self));
 
