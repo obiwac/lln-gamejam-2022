@@ -85,7 +85,11 @@ static const char* egl_error_str(void) {
 }
 
 void win_set_caption(win_t* self, char* caption) {
+	xcb_change_property(self->connection, XCB_PROP_MODE_REPLACE, self->win, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, strlen(caption) /* don't need to include null */, caption);
+
 	xcb_ewmh_set_wm_name(&self->ewmh, self->win, strlen(caption) + 1, caption);
+	xcb_ewmh_set_wm_visible_name(&self->ewmh, self->win, strlen(caption) + 1, caption);
+
 	xcb_flush(self->connection);
 }
 
