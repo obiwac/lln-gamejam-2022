@@ -6,7 +6,7 @@
 #include <math.h>
 #include <stdbool.h>
 
-#define GRAVITY -32 // -32
+#define GRAVITY 0 // -32
 
 typedef struct {
 	float jump_height;

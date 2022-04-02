@@ -60,6 +60,12 @@ typedef struct {
 
 	int (*resize_cb) (void* param, uint32_t x_res, uint32_t y_res);
 	void* resize_param;
+
+	int (*keypress_cb) (void* params, xcb_keycode_t key);
+	void* keypress_param;
+
+	int (*keyrelease_cb) (void* params, xcb_keycode_t key);
+	void* keyrelease_param;
 } win_t;
 
 static const char* egl_error_str(void) {
@@ -350,11 +356,19 @@ static inline void __process_event(win_t* self, int type, xcb_generic_event_t* e
 		if (key == 9 /* ESC */) {
 			win_set_exclusive_mouse(self, false);
 		}
+
+		if (self->keypress_cb) {
+			self->keypress_cb(self->keypress_param, key);
+		}
 	}
 
 	else if (type == XCB_KEY_RELEASE) {
 		xcb_key_release_event_t* detail = (void*) event;
 		xcb_keycode_t key = detail->detail;
+
+		if (self->keyrelease_cb) {
+			self->keyrelease_cb(self->keyrelease_param, key);
+		}
 	}
 
 	else if (type == XCB_BUTTON_PRESS) {

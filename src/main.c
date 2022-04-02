@@ -36,6 +36,8 @@ typedef struct {
 	size_t fbo_count;
 } game_t;
 
+#include "events.h"
+
 #include "vertex.h"
 #include "shader.h"
 #include "object.h"
@@ -44,7 +46,6 @@ typedef struct {
 
 #define GL_REQUIRE(game, name) (game)->gl.name = (void *)eglGetProcAddress("gl" #name);
 
-static float x, y = 0;
 static object_t* default_quad;
 static skybox_t* sky;
 
@@ -94,7 +95,8 @@ int draw(void *param, float dt)
 
 	// PHYSICS SHIT
 
-	entity_update((entity_t*) self->player, dt);
+	update_mouse(self);
+	player_update(self->player, dt);
 
 	// RENDER SHIT
 
@@ -108,22 +110,11 @@ int draw(void *param, float dt)
 	matrix_translate(self->mv_matrix,(float[3]){dt,0,1});
 	matrix_perspective(self->p_matrix, 90, (float) self->win->x_res / self->win->y_res, 0.1, 500);
 
-	x += self->win->mouse_dx / 100.0;
-	y -= self->win->mouse_dy / 100.0;
-
-	if (y > TAU / 4) {
-		y = TAU / 4;
-	}
-
-	if (y < -TAU / 4) {
-		y = -TAU / 4;
-	}
-
 	// model-view matrix
 
 	matrix_identity(self->mv_matrix);
 
-	matrix_rotate_2d(self->mv_matrix, (float[2]) { x, y });
+	matrix_rotate_2d(self->mv_matrix, (float[2]) { self->player->entity.rot[0] + TAU / 4, self->player->entity.rot[1] });
 	matrix_translate(self->mv_matrix, (float[3]) { -self->player->entity.pos[0], -self->player->entity.pos[1], -self->player->entity.pos[2] });
 
 	// model-view-projection matrix
@@ -306,6 +297,12 @@ int main(int argc, char** argv)
 
 	win->resize_cb = resize;
 	win->resize_param = &game;
+
+	win->keypress_cb = keypress;
+	win->keypress_param = &game;
+
+	win->keyrelease_cb = keyrelease;
+	win->keyrelease_param = &game;
 
 	win_loop(win);
 
