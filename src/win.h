@@ -52,6 +52,14 @@ typedef struct {
 
 	bool exclusive_mouse;
 	int mouse_dx, mouse_dy;
+
+	// callbacks
+
+	int (*draw_cb) (void* param, float dt);
+	void* draw_param;
+
+	int (*resize_cb) (void* param, uint32_t x_res, uint32_t y_res);
+	void* resize_param;
 } win_t;
 
 static const char* egl_error_str(void) {
@@ -322,6 +330,10 @@ static inline void __process_event(win_t* self, int type, xcb_generic_event_t* e
 		self->y_res = detail->height;
 
 		gl->Viewport(0, 0, self->x_res, self->y_res);
+
+		if (self->resize_cb) {
+			self->resize_cb(self->resize_param, self->x_res, self->y_res);
+		}
 	}
 
 	else if (type == XCB_KEY_PRESS) {
@@ -360,7 +372,7 @@ static inline void __process_event(win_t* self, int type, xcb_generic_event_t* e
 	#undef GENERIC_MOTION_EVENT
 }
 
-void win_loop(win_t* self, int (*draw_cb) (void* param, float dt), void* param) {
+void win_loop(win_t* self) {
 	while (self->running) {
 		// get time between two frames
 
@@ -387,7 +399,10 @@ void win_loop(win_t* self, int (*draw_cb) (void* param, float dt), void* param) 
 
 		// draw & swap buffers
 
-		draw_cb(param, dt);
+		if (self->draw_cb) {
+			self->draw_cb(self->draw_param, dt);
+		}
+
 		eglSwapBuffers(self->egl_display, self->egl_surface);
 
 		// process events

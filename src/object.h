@@ -66,7 +66,6 @@ object_t *create_object(gl_funcs_t *gl, shader_t *shader,bool auto_render,vertex
 	gl->BindBuffer(GL_ELEMENT_ARRAY_BUFFER,self->ibo);
 	gl->BufferData(GL_ELEMENT_ARRAY_BUFFER,indice_size,indices,GL_STATIC_DRAW);
 
-
 	//Position
 	gl->EnableVertexAttribArray(0);
 	gl->VertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,  sizeof(float) * 8, (void *)0);
@@ -79,7 +78,6 @@ object_t *create_object(gl_funcs_t *gl, shader_t *shader,bool auto_render,vertex
 	gl->EnableVertexAttribArray(2);
 	gl->VertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE,  sizeof(float) * 8, (void *)20);
 
-
 	//Set default values:
 	for(unsigned int i = 0; i < 4 ; i++)
 	{
@@ -87,9 +85,10 @@ object_t *create_object(gl_funcs_t *gl, shader_t *shader,bool auto_render,vertex
 		self->transform.rotation[i] = 1;
 		self->transform.scale[i] = 1;
 	}
-	if(auto_render){
-	object_a[render_object_count] = self;
-	render_object_count++;
+
+	if (auto_render) {
+		object_a[render_object_count] = self;
+		render_object_count++;
 	}
 
 	self->indice_count = indice_size;

@@ -140,9 +140,10 @@ void shader_uniform_fvec4(gl_funcs_t* gl, GLuint location, float* uniform) {
 void shader_uniform_mat4(gl_funcs_t* gl, GLuint location, matrix_t* uniform) {
 	gl->UniformMatrix4fv(location, 1, GL_FALSE, (float*) *uniform);
 	GLenum err =  gl->GetError();
+
 	if(err != GL_NO_ERROR)
 	{
-		LOG("Error while setting uniform : %x",err);
+		WARN("Error while setting uniform: %d\n",err);
 	}
 }
 
