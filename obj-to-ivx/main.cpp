@@ -12,15 +12,14 @@
 using namespace glm;
 
 #ifndef VERSION_MAJOR
-	#define VERSION_MAJOR 3
+	#define VERSION_MAJOR 6
 #endif
 
 #ifndef VERSION_MINOR
-	#define VERSION_MINOR 0
+	#define VERSION_MINOR 9
 #endif
 
 #define USE_NORMALS (VERSION_MAJOR * 100 + VERSION_MINOR) >= 101 // is version greater or equal to 1.1?
-#define MAX_ATTRIBUTE_COUNT 8
 
 bool load_obj(const char* path, char* name, std::vector<glm::vec3>& out_vertices, std::vector<glm::vec2>& out_coords, std::vector<glm::vec3>& out_normals) {
 	std::vector<uint32_t> vertex_indices;
@@ -161,10 +160,6 @@ void index_vbo(std::vector<glm::vec3>& in_vertices, std::vector<glm::vec2>& in_c
 	}
 }
 
-typedef struct { // vertex attribute header
-	uint64_t components;
-	uint64_t offset;
-} ivx_attribute_header_t;
 
 typedef struct { // header
 	uint64_t version_major;
@@ -174,7 +169,9 @@ typedef struct { // header
 	uint64_t index_count;
 	uint64_t index_offset;
 
-	ivx_attribute_header_t attributes[MAX_ATTRIBUTE_COUNT];
+	uint64_t vertex_count;
+	uint64_t components;
+	uint64_t offset;
 } ivx_header_t;
 
 typedef struct { float x; float y; float z; } ivx_vec3_t;
@@ -243,34 +240,32 @@ int main(int argc, char* argv[]) {
 		fwrite(&data, 1, sizeof(data), ivx_file);
 	}
 
-	// write vertex attribute
+	// write attributes
 
-	ivx_header.attributes[0].components = 3;
-	ivx_header.attributes[0].offset = ftell(ivx_file);
+	ivx_header.vertex_count = indexed_vertices.size();
+	ivx_header.components = 3 + 2 + 3;
+	ivx_header.offset = ftell(ivx_file);
 
-	for (uint64_t i = 0; i < indexed_vertices.size(); i++) {
-		ivx_vec3_t data = { indexed_vertices[i].x, indexed_vertices[i].y, indexed_vertices[i].z };
-		fwrite(&data, 1, sizeof(data), ivx_file);
+	printf("offset %d\n", 	ivx_header.offset);
+
+	if (ivx_header.vertex_count != indexed_coords.size() or ivx_header.vertex_count != indexed_normals.size()) {
+		return 1;
 	}
 
-	// write texture coord attribute
+	for (uint64_t i = 0; i < ivx_header.vertex_count; i++) {
+		float data[ivx_header.components] = {
+			indexed_vertices[i].x,
+			indexed_vertices[i].y,
+			indexed_vertices[i].z,
 
-	ivx_header.attributes[1].components = 2;
-	ivx_header.attributes[1].offset = ftell(ivx_file);
+			indexed_coords  [i].y,
+			indexed_coords  [i].x,
 
-	for (uint64_t i = 0; i < indexed_coords.size(); i++) {
-		ivx_vec2_t data = { indexed_coords[i].x, indexed_coords[i].y };
-		fwrite(&data, 1, sizeof(data), ivx_file);
+			indexed_normals [i].x,
+			indexed_normals [i].y,
+			indexed_normals [i].z,
+		};
 
-	}
-
-	// write normal attribute
-
-	ivx_header.attributes[2].components = 3;
-	ivx_header.attributes[2].offset = ftell(ivx_file);
-
-	for (uint64_t i = 0; i < indexed_normals.size(); i++) {
-		ivx_vec3_t data = { indexed_normals[i].x, indexed_normals[i].y, indexed_normals[i].z };
 		fwrite(&data, 1, sizeof(data), ivx_file);
 	}
 

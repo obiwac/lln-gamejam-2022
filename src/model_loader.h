@@ -3,11 +3,6 @@
 
 #include "object.h"
 
-typedef struct { // vertex attribute header
-    uint64_t components;
-    uint64_t offset;
-} ivx_attribute_header_t;
-
 typedef struct { // ivx header
 	uint64_t version_major;
 	uint64_t version_minor;
@@ -18,7 +13,8 @@ typedef struct { // ivx header
 	uint64_t index_offset;
 
 	uint64_t vertex_count;
-	ivx_attribute_header_t attributes[MAX_ATTRIBUTE_COUNT];
+	uint64_t components;
+	uint64_t offset;
 } ivx_header_t;
 
 typedef struct { // ivx
@@ -45,7 +41,7 @@ object_t* load_model(gl_funcs_t *gl, const char* src, shader_t* shader, bool aut
 	FILE* fp = fopen(src, "r");
 
 	if (!fp) {
-		fprintf(stderr, "Failed to load %s (%s)\n", src, strerror(errno));
+		WARN("Failed to load %s (%s)\n", src, strerror(errno))
 		return NULL;
 	}
 
@@ -61,41 +57,40 @@ object_t* load_model(gl_funcs_t *gl, const char* src, shader_t* shader, bool aut
 
     ivx->header = ivx->data;
 
+	if (ivx->header->version_major != 6 || ivx->header->version_minor != 9) {
+		WARN("Wrong IVX version (v6.9 required)")
+		return NULL;
+	}
+
 	// VAO
 
 	gl->GenVertexArrays(1, &ivx->vao);
 	gl->BindVertexArray(ivx->vao);
 
+	self->vao = ivx->vao;
+
 	// VBO
 
 	gl->GenBuffers(1, &ivx->vbo);
 	gl->BindBuffer(GL_ARRAY_BUFFER, ivx->vbo);
+	gl->BufferData(GL_ARRAY_BUFFER, ivx->header->vertex_count * sizeof(float) * ivx->header->components, ivx->data + ivx->header->offset, GL_STATIC_DRAW);
 
 	// IBO
 
 	gl->GenBuffers(1, &ivx->ibo);
 	gl->BindBuffer(GL_ELEMENT_ARRAY_BUFFER, ivx->ibo);
+	gl->BufferData(GL_ELEMENT_ARRAY_BUFFER, ivx->header->index_count * sizeof(uint32_t), ivx->data + ivx->header->index_offset, GL_STATIC_DRAW);
 
-	gl->BufferData(GL_ELEMENT_ARRAY_BUFFER, );
+	// attributes
 
-	for (int i = 0; i < MAX_ATTRIBUTE_COUNT; i++) {
-		ivx_attribute_header_t* attribute_header = &ivx->header->attributes[i];
+	gl->EnableVertexAttribArray(0);
+	gl->VertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,  sizeof(float) * 8, (void *)0);
 
-		if (!attribute_header->components) {
-			break;
-		}
+	gl->EnableVertexAttribArray(1);
+	gl->VertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE,  sizeof(float) * 8, (void *) (3 * sizeof(float)));
 
-		gl->GenBuffers(1, &ivx->vbo[i]);
-		gl->BindBuffer(GL_ARRAY_BUFFER, ivx->vbo[i]);
-
-		gl->BufferData(GL_ARRAY_BUFFER, ivx->header->vertex_count * sizeof(GLfloat) * attribute_header->components, ivx->data + attribute_header->offset, GL_STATIC_DRAW);
-		gl->VertexAttribPointer(i, attribute_header->components, GL_FLOAT, GL_FALSE, 0, 0);
-		gl->EnableVertexAttribArray(i);
-	}
-
-	gl->GenBuffers(1, &self->ibo);
-	gl->BindBuffer(GL_ELEMENT_ARRAY_BUFFER, self->ibo);
-	gl->BufferData(GL_ELEMENT_ARRAY_BUFFER, ivx->header->index_count * sizeof(GLuint), ivx->data + ivx->header->index_offset, GL_STATIC_DRAW);
+	gl->EnableVertexAttribArray(2);
+	gl->VertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE,  sizeof(float) * 8, (void *) ((3 + 2) * sizeof(float)));
 
 	//Set default values:
 	for(unsigned int i = 0; i < 4 ; i++)
@@ -104,9 +99,10 @@ object_t* load_model(gl_funcs_t *gl, const char* src, shader_t* shader, bool aut
 		self->transform.rotation[i] = 1;
 		self->transform.scale[i] = 1;
 	}
+
 	if(autorender){
-	object_a[render_object_count] = self;
-	render_object_count++;
+		object_a[render_object_count] = self;
+		render_object_count++;
 	}
 
 	self->indice_count = ivx->header->index_count;

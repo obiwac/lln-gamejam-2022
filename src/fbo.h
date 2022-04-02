@@ -6,7 +6,9 @@ struct fbo_t {
 	game_t* game;
 
 	GLuint fbo;
-	GLuint texture;
+
+	GLuint colour_texture;
+	GLuint depth_texture;
 
 	float x_res_frac;
 	float y_res_frac;
@@ -21,15 +23,22 @@ void fbo_resize(fbo_t* fbo) {
 	uint32_t x_res = fbo->game->win->x_res * fbo->x_res_frac;
 	uint32_t y_res = fbo->game->win->y_res * fbo->y_res_frac;
 
-	if (fbo->texture) {
-		gl->DeleteTextures(1, &fbo->texture);
+	if (fbo->colour_texture) {
+		gl->DeleteTextures(1, &fbo->colour_texture);
 	}
 
-	gl->GenTextures(1, &fbo->texture);
+	if (fbo->depth_texture) {
+		gl->DeleteTextures(1, &fbo->depth_texture);
+	}
+
+	gl->GenTextures(1, &fbo->colour_texture);
+	gl->GenTextures(1, &fbo->depth_texture);
 
 	gl->BindFramebuffer(GL_FRAMEBUFFER, fbo->fbo);
-	gl->BindTexture(GL_TEXTURE_2D, fbo->texture);
 
+	// colour texture
+
+	gl->BindTexture(GL_TEXTURE_2D, fbo->colour_texture);
 	gl->TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, x_res, y_res, 0, GL_RGBA, GL_FLOAT, NULL);
 
 	gl->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -37,7 +46,20 @@ void fbo_resize(fbo_t* fbo) {
 	gl->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	gl->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	gl->FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbo->texture, 0);
+	gl->FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbo->colour_texture, 0);
+
+	// depth texture
+
+	gl->BindTexture(GL_TEXTURE_2D, fbo->depth_texture);
+	gl->TexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, x_res, y_res, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
+
+	gl->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	gl->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	gl->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	gl->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	gl->FramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, fbo->depth_texture, 0);
+
 	gl->BindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 

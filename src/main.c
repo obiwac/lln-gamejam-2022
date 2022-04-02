@@ -43,17 +43,27 @@ static skybox_t* sky;
 
 void draw_skybox(game_t* self,skybox_t* skybox)
 {
+	gl_funcs_t* gl = &self->gl;
+
 	matrix_t viewmat,mvp;
 	matrix_copy(viewmat,self->mv_matrix);
+
 	viewmat[3][0] = 0.0f;
 	viewmat[3][1] = 0.0f;
 	viewmat[3][2] = 0.0f;
+
 	matrix_multiply(mvp, self->p_matrix, viewmat);
 	shader_uniform(skybox->object->shader, "mvp_ma", &mvp);
-	self->gl.DepthMask(GL_FALSE);
-	self->gl.BindTexture(GL_TEXTURE_CUBE_MAP, skybox->texture);
-	render_object(&self->gl,skybox->object);
-	self->gl.DepthMask(GL_TRUE);
+
+	gl->DepthFunc(GL_EQUAL);
+	gl->DepthMask(GL_FALSE);
+	gl->BindTexture(GL_TEXTURE_CUBE_MAP, skybox->texture);
+
+	render_object(&self->gl, skybox->object);
+
+	gl->DepthMask(GL_TRUE);
+	gl->DepthFunc(GL_LESS);
+	gl->Enable(GL_DEPTH_TEST);
 }
 
 int draw(void *param, float dt)
@@ -82,28 +92,28 @@ int draw(void *param, float dt)
 
 	// model-view matrix
 	matrix_identity(self->mv_matrix);
-	matrix_translate(self->mv_matrix, (float[3]) { 0, 0, -1 });
-	matrix_translate(self->mv_matrix, (float[2]) { x, y ,1.0});
+	matrix_translate(self->mv_matrix, (float[3]) { 0, 0, -2 });
+	matrix_rotate_2d(self->mv_matrix, (float[2]) { x, y });
 
 	// model-view-projection matrix
 	matrix_multiply(self->mvp_matrix, self->p_matrix, self->mv_matrix);
 
-	for(size_t i = 0; i < render_object_count ; i++) {
+	for (size_t i = 0; i < render_object_count ; i++) {
 		shader_uniform(object_a[i]->shader, "tint", ((float[4]) { 0.0, 0.0, 1.0, 1.0 }));
 		shader_uniform(object_a[i]->shader, "mvp_matrix", &self->mvp_matrix);
+
 		gl->ActiveTexture(GL_TEXTURE0);
-		gl->BindTexture(GL_TEXTURE_2D,object_a[i]->tex_albedo);
+		gl->BindTexture(GL_TEXTURE_2D, object_a[i]->tex_albedo);
+
 		render_object(gl, object_a[i]);
 	}
-
-	//Post Processing Here !
-	//All post processing output a texture
 
 	//Combine All Texture for final result
 	gl->BindFramebuffer(GL_FRAMEBUFFER,0);
 	gl->ClearColor(0.7, 0.1, 0.1, 1.0);
     gl->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	gl->BindTexture(GL_TEXTURE_2D,self->combine_fbo->texture);
+
+	gl->BindTexture(GL_TEXTURE_2D,self->combine_fbo->colour_texture);
 
 	render_object(gl, default_quad);
 
@@ -169,7 +179,8 @@ int main(int argc, char** argv)
 		.win = win
 	};
 
-	win->gl = &game.gl;
+	gl_funcs_t *gl = &game.gl;
+	win->gl = gl;
 
 	// load OpenGL functions manually
 
@@ -218,6 +229,9 @@ int main(int argc, char** argv)
 	GL_REQUIRE(&game, DepthMask)
 	GL_REQUIRE(&game, GetError)
 	GL_REQUIRE(&game, DeleteTextures)
+	GL_REQUIRE(&game, Enable)
+	GL_REQUIRE(&game, Disable)
+	GL_REQUIRE(&game, DepthFunc)
 
 	sky = create_skybox(&game.gl);
 	shader_t* shader = create_shader(&game.gl, "default");
@@ -249,8 +263,8 @@ int main(int argc, char** argv)
 	game.combine_fbo = new_fbo(&game, 1.0, 1.0);
 
 	// register callbacks & start gameloop
-	
-	load_model(&game.gl,"rsc/Models/suzanne.ivx",shader,true);
+
+	load_model(&game.gl,"obj-to-ivx/output.ivx",shader,true);
 
 	win->draw_cb = draw;
 	win->draw_param = &game;
