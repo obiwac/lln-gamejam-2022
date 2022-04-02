@@ -35,7 +35,6 @@ static void ivx_free(ivx_t* ivx) {
 
 object_t* load_model(gl_funcs_t *gl, const char* src, shader_t* shader, bool auto_render) {
     ivx_t* ivx = (ivx_t*)calloc(1, sizeof *ivx);
-    object_t *self = (object_t *)calloc(1, sizeof(*self));
 
 	FILE* fp = fopen(src, "r");
 
@@ -60,10 +59,10 @@ object_t* load_model(gl_funcs_t *gl, const char* src, shader_t* shader, bool aut
 		WARN("Wrong IVX version (v6.9 required)")
 		return NULL;
 	}
-	
-	self = create_object(gl, shader,
+
+	object_t* self = create_object(gl, shader,
 	 auto_render,
-	  ivx->data + ivx->header->offset, 
+	  ivx->data + ivx->header->offset,
 	  ivx->header->vertex_count * sizeof(float) * ivx->header->components,
 	  ivx->data + ivx->header->index_offset,
 	  ivx->header->index_count * sizeof(uint32_t));

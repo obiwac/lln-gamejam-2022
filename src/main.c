@@ -1,11 +1,13 @@
 #include "gl/gl.h"
 
+#define TAU 6.28318
+
 #include "log.h"
 #include "win.h"
 #include "matrix.h"
 #include "vertex.h"
 #include "model_loader.h"
-
+#include "player.h"
 
 // forward declarations
 
@@ -19,10 +21,17 @@ typedef struct {
 	matrix_t mv_matrix;
 	matrix_t mvp_matrix;
 
+	// entities
+
+	player_t* player;
+	// TODO list of entities
+
 	// fbos
+
 	fbo_t* combine_fbo;
 
 	// maintain list of fbos for resizing
+
 	fbo_t** fbos;
 	size_t fbo_count;
 } game_t;
@@ -69,7 +78,13 @@ int draw(void *param, float dt)
 	game_t *self = param;
 	gl_funcs_t *gl = &self->gl;
 
+	if (dt > 1. / 20) {
+		dt = 1. / 60;
+	}
+
 	// LOG("FPS: %f\n", 1 / dt)
+
+	// WINDOW SHIT
 
 	char caption[256];
 	snprintf(caption, sizeof caption, "Gamejam 2022 (%d FPS)", (int) (1 / dt));
@@ -77,10 +92,18 @@ int draw(void *param, float dt)
 
 	use_fbo(self->combine_fbo);
 
+	// PHYSICS SHIT
+
+	entity_update((entity_t*) self->player, dt);
+
+	// RENDER SHIT
+
 	// Draw Skybox:
+
 	draw_skybox(self,sky);
 
 	// projection matrix
+
 	matrix_identity(self->p_matrix);
 	matrix_translate(self->mv_matrix,(float[3]){dt,0,1});
 	matrix_perspective(self->p_matrix, 90, (float) self->win->x_res / self->win->y_res, 0.1, 500);
@@ -88,15 +111,25 @@ int draw(void *param, float dt)
 	x += self->win->mouse_dx / 100.0;
 	y -= self->win->mouse_dy / 100.0;
 
+	if (y > TAU / 4) {
+		y = TAU / 4;
+	}
+
+	if (y < -TAU / 4) {
+		y = -TAU / 4;
+	}
+
 	// model-view matrix
+
 	matrix_identity(self->mv_matrix);
-	matrix_translate(self->mv_matrix, (float[3]) { 0, 0, -2 });
+
 	matrix_rotate_2d(self->mv_matrix, (float[2]) { x, y });
+	matrix_translate(self->mv_matrix, (float[3]) { -self->player->entity.pos[0], -self->player->entity.pos[1], -self->player->entity.pos[2] });
 
 	// model-view-projection matrix
 	matrix_multiply(self->mvp_matrix, self->p_matrix, self->mv_matrix);
 
-	for (size_t i = 0; i < render_object_count ; i++) {
+	for (size_t i = 0; i < render_object_count; i++) {
 		matrix_transform(object_a[i]->transform_matrix, object_a[i]->transform.translation, object_a[i]->transform.rotation, object_a[i]->transform.scale);
 
 		shader_uniform(object_a[i]->shader, "transform_matrix", &object_a[i]->transform_matrix);
@@ -177,7 +210,8 @@ int main(int argc, char** argv)
 	win_t* win = create_win(800, 480);
 
 	game_t game = {
-		.win = win
+		.win = win,
+		.player = new_player()
 	};
 
 	gl_funcs_t *gl = &game.gl;
