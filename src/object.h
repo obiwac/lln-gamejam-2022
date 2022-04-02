@@ -55,14 +55,7 @@ object_t *create_object(gl_funcs_t *gl, shader_t *shader,bool auto_render,vertex
 	gl->BindVertexArray(self->vao);
 
 	gl->BindBuffer(GL_ARRAY_BUFFER, self->vbo);
-	
 	gl->BufferData(GL_ARRAY_BUFFER, vert_size, vert, GL_STATIC_DRAW);
-
-	// ugly but simple :)
-
-	gl->GenBuffers(1,&self->ibo);
-	gl->BindBuffer(GL_ELEMENT_ARRAY_BUFFER,self->ibo);
-	gl->BufferData(GL_ELEMENT_ARRAY_BUFFER,indice_size,indices,GL_STATIC_DRAW);
 
 	//Position
 	gl->EnableVertexAttribArray(0);
@@ -75,6 +68,12 @@ object_t *create_object(gl_funcs_t *gl, shader_t *shader,bool auto_render,vertex
 	//Normal
 	gl->EnableVertexAttribArray(2);
 	gl->VertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE,  sizeof(float) * 8, (void *)20);
+
+	// ugly but simple :)
+
+	gl->GenBuffers(1,&self->ibo);
+	gl->BindBuffer(GL_ELEMENT_ARRAY_BUFFER,self->ibo);
+	gl->BufferData(GL_ELEMENT_ARRAY_BUFFER,indice_size,indices,GL_STATIC_DRAW);
 
 	//Set default values:
 	for(unsigned int i = 0; i < 4 ; i++)
