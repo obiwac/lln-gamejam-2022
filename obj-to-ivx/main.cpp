@@ -122,7 +122,7 @@ struct packed_vertex_s {
 	glm::vec3 normal;
 
 	bool operator < (const packed_vertex_s that) const {
-		return memcpy((void*) this, (void*) &that, sizeof(packed_vertex_s)) > 0;
+		return memcmp((void*) this, (void*) &that, sizeof(packed_vertex_s)) > 0;
 	};
 };
 
