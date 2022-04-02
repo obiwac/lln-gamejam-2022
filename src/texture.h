@@ -40,7 +40,7 @@ GLuint loadcubemap(gl_funcs_t*gl, char* directory)
     int width, height, channels;
     unsigned char* data;
     GLuint texture;
-    const char* positions[6] = {"top.png","bottom.png","front.png","left.png","right.png","back.png"};
+    const char* positions[6] = {"right.jpg","left.jpg","top.jpg","bottom.jpg","front.jpg","back.jpg"};
     gl->GenTextures(1,&texture);
     gl->BindTexture(GL_TEXTURE_CUBE_MAP,texture);
     for(unsigned int i = 0 ; i < 6 ; i++)
@@ -48,7 +48,7 @@ GLuint loadcubemap(gl_funcs_t*gl, char* directory)
         size_t len = snprintf(NULL, 0, directory, positions[i]);
 	    char* path = malloc(len + 1);
 	    snprintf(path, len + 1, directory, positions[i]);
-        data = stbi_load(path,&width,&height,&channels,0);
+        data = stbi_load(path,&width,&height,&channels,STBI_rgb);
         if(!data)
             LOG("Error while loading : %s",path);
         gl->TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,0,GL_RGB,width,height,0,GL_RGB,GL_UNSIGNED_BYTE,data);

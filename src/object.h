@@ -29,6 +29,12 @@ typedef struct
 	transform_t transform;
 } object_t;
 
+typedef struct 
+{
+	object_t* object;
+	GLuint texture;
+}skybox_t;
+
 static object_t* object_a[255];
 static unsigned int render_object_count = 0;
 static unsigned int object_count = 0;

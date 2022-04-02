@@ -27,6 +27,7 @@ typedef struct
 
 static float x, y = 0;
 static  object_t* default_quad;
+static skybox_t* sky;
 
 int draw(void *param, float dt)
 {
@@ -44,6 +45,10 @@ int draw(void *param, float dt)
 	gl->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	gl->BindFramebuffer(GL_FRAMEBUFFER,self->framebuffer);
 	gl->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+	// Draw Skybox:
+	draw_skybox(self,sky);
 
 	// projection matrix
 	matrix_identity(self->p_matrix);
@@ -88,6 +93,51 @@ int draw(void *param, float dt)
 	return 0;
 }
 
+void draw_skybox(game_t* self,skybox_t* skybox)
+{
+	matrix_t viewmat,mvp;
+	matrix_copy(viewmat,self->mv_matrix);
+	viewmat[3][0] = 0.0f;
+	viewmat[3][1] = 0.0f;
+	viewmat[3][2] = 0.0f;
+	matrix_multiply(&mvp, &self->p_matrix, &viewmat);
+	shader_uniform(skybox->object->shader, "mvp_matrix", &mvp);
+	self->gl.DepthMask(GL_FALSE);
+	self->gl.BindTexture(GL_TEXTURE_CUBE_MAP, skybox->texture);
+	render_object(&self->gl,skybox->object);
+	self->gl.DepthMask(GL_TRUE);
+}
+
+skybox_t* create_skybox(gl_funcs_t* gl)
+{
+		//Create a cube - "cube"map :)
+	vertex_t cube[] = 
+	 {
+	 	{.position = {-1.0f, -1.0, -1.0f}},
+	 	{.position = {1.0f, -1.0f, -1.0f}},
+	 	{.position = {1.0f, 1.0f, -1.0f}},
+	 	{.position = {-1.0f,  1.0f, -1.0f}},
+	 	{.position = {-1.0f,  -1.0f, 1.0f}},
+	 	{.position = {1.0f,  -1.0f, 1.0f}},
+	 	{.position = {1.0f,  1.0f, 1.0f}},
+	 	{.position = {-1.0f,  1.0f, 1.0f}}
+	 };
+	 int indices[6 * 6] = 
+	{
+    0, 1, 3, 3, 1, 2,
+    1, 5, 2, 2, 5, 6,
+    5, 4, 6, 6, 4, 7,
+    4, 0, 7, 7, 0, 3,
+    3, 2, 7, 7, 2, 6,
+    4, 5, 0, 0, 5, 1
+	};
+	skybox_t* self =  (skybox_t *)calloc(1, sizeof(*self));
+	shader_t* shader = create_shader(gl, "skybox");
+	self->texture =  loadcubemap(gl,"rsc/Textures/skybox/%s");
+	self->object =   create_object(gl, shader,true,cube,sizeof(cube),indices,sizeof(indices));
+	return self;
+}
+
 static void gl_func_not_loaded(void)
 {
 	WARN("OpenGL function not yet loaded. Use 'GL_REQUIRE'.\n")
@@ -121,7 +171,7 @@ int main(int argc, char** argv)
 	// TODO debugging arguments for stuff like verbose logging
 
 	game_t game = {
-		.win = create_win(800, 480)
+		.win = create_win(1920, 1080)
 	};
 
 	game.win->gl = &game.gl;
@@ -170,7 +220,9 @@ int main(int argc, char** argv)
 	GL_REQUIRE(&game, GenFramebuffers)
 	GL_REQUIRE(&game, BindFramebuffer)
 	GL_REQUIRE(&game, FramebufferTexture2D)
+	GL_REQUIRE(&game, DepthMask)
 
+	sky = create_skybox(&game.gl);
 	shader_t* shader = create_shader(&game.gl, "default");
 	//Todo mode loading 
 	vertex_t vert[] = 
