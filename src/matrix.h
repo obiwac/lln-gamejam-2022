@@ -124,21 +124,9 @@ static inline void matrix_perspective(matrix_t matrix, float fovy, float aspect,
 	matrix_frustum(matrix, -x * near, x * near, -y * near, y * near, near, far);
 }
 
-static inline void matrix_transform(matrix_t out,float pos[3],float rot[3],float scale[3]){
-	//matrix_identity(out);
-	memset(out, 0, sizeof(matrix_t)); 
-	//W:
-	out[3][3] = 1;
-
-	//Translation part:
-	out[3][0] = pos[0];
-	out[3][1] = pos[1];
-	out[3][2] = pos[2];
-
-	//Scale part:
-	out[0][0] = rot[0];
-	out[1][1] = rot[1];
-	out[2][2] = rot[2];
-	//Rotation part :
-
+static inline void matrix_transform(matrix_t out,float pos[3],float rot[2],float scale[3]){
+	matrix_identity(out);
+	matrix_translate(out, pos);
+	matrix_scale(out, scale);
+	matrix_rotate_2d(out,rot);
 }

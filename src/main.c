@@ -20,11 +20,9 @@ typedef struct {
 	matrix_t mvp_matrix;
 
 	// fbos
-
 	fbo_t* combine_fbo;
 
 	// maintain list of fbos for resizing
-
 	fbo_t** fbos;
 	size_t fbo_count;
 } game_t;
@@ -99,6 +97,9 @@ int draw(void *param, float dt)
 	matrix_multiply(self->mvp_matrix, self->p_matrix, self->mv_matrix);
 
 	for (size_t i = 0; i < render_object_count ; i++) {
+		matrix_transform(object_a[i]->transform_matrix, object_a[i]->transform.translation, object_a[i]->transform.rotation, object_a[i]->transform.scale);
+
+		shader_uniform(object_a[i]->shader, "transform_matrix", &object_a[i]->transform_matrix);
 		shader_uniform(object_a[i]->shader, "tint", ((float[4]) { 0.0, 0.0, 1.0, 1.0 }));
 		shader_uniform(object_a[i]->shader, "mvp_matrix", &self->mvp_matrix);
 
@@ -258,7 +259,7 @@ int main(int argc, char** argv)
 	 };
 	unsigned int q_incides[6] = {0,1,3,1,2,3};
 	shader_t* combine_shader = create_shader(&game.gl, "combine");
-	default_quad = create_object(&game.gl,combine_shader,false,quad,sizeof(quad),q_incides,sizeof(q_incides));
+	default_quad = create_object(&game.gl, combine_shader, false, quad, sizeof(quad), q_incides, sizeof(q_incides));
 
 	game.combine_fbo = new_fbo(&game, 1.0, 1.0);
 
