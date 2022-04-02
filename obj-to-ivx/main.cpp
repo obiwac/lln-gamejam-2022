@@ -122,7 +122,7 @@ struct packed_vertex_s {
 	glm::vec3 normal;
 
 	bool operator < (const packed_vertex_s that) const {
-		return memcpy((void*) this, (void*) &that, sizeof(packed_vertex_s)) > 0;
+		return memcmp((void*) this, (void*) &that, sizeof(packed_vertex_s)) > 0;
 	};
 };
 
@@ -245,8 +245,6 @@ int main(int argc, char* argv[]) {
 	ivx_header.vertex_count = indexed_vertices.size();
 	ivx_header.components = 3 + 2 + 3;
 	ivx_header.offset = ftell(ivx_file);
-
-	printf("offset %d\n", 	ivx_header.offset);
 
 	if (ivx_header.vertex_count != indexed_coords.size() or ivx_header.vertex_count != indexed_normals.size()) {
 		return 1;
