@@ -1,11 +1,16 @@
 #pragma once
 
+// TODO (not yet implemented) the idea we landed on was to use a texture array per texture layer (i.e. one for albedo, normal, roughness, & emission)
+// then, the Z component of the texture coordinate can be used to select which texture we'd like (grass, stone, idk)
+// the main advantage of doing things this way is that we can very easily just disable layers we don't want for performance
+// also, stacking textures in texture arrays means that we only use up one texture unit for all used textures
+
 #include <malloc.h>
 #include <stdlib.h>
 #include "shader.h"
 
 
-typedef struct 
+typedef struct
 {
 	float translation[3];
 	float rotation[3];
@@ -37,7 +42,7 @@ object_t *create_object(gl_funcs_t *gl, shader_t *shader,bool auto_render)
 	object_t *self = (object_t *)calloc(1, sizeof(*self));
 
 	self->shader = shader;
-	 vertex_t vert[] = 
+	 vertex_t vert[] =
 	 {
 	 	{.position = {-0.5f, -0.5f, 0.0f},.texcoord = {0.0f,0.0f},.normal ={1.0f,1.0f,1.0f}},
 	 	{.position = {0.5f, -0.5f, 0.0f},.texcoord = {1.0f,0.0f},.normal ={1.0f,1.0f,1.0f}},
@@ -51,15 +56,14 @@ object_t *create_object(gl_funcs_t *gl, shader_t *shader,bool auto_render)
 	gl->BindVertexArray(self->vao);
 
 	gl->BindBuffer(GL_ARRAY_BUFFER, self->vbo);
-	printf("%i \n",sizeof(vert));
 	gl->BufferData(GL_ARRAY_BUFFER, sizeof(vert), vert, GL_STATIC_DRAW);
 
-	//Ulgy but simple :)
+	// ugly but simple :)
 
 	gl->GenBuffers(1,&self->ibo);
 	gl->BindBuffer(GL_ELEMENT_ARRAY_BUFFER,self->ibo);
 	gl->BufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(indices),indices,GL_STATIC_DRAW);
-	
+
 
 	//Position
 	gl->EnableVertexAttribArray(0);
@@ -73,8 +77,8 @@ object_t *create_object(gl_funcs_t *gl, shader_t *shader,bool auto_render)
 	gl->EnableVertexAttribArray(2);
 	gl->VertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE,  sizeof(float) * 8, (void *)20);
 
-	
-	//Set default values: 
+
+	//Set default values:
 	for(unsigned int i = 0; i < 4 ; i++)
 	{
 		self->transform.translation[i] = 1;

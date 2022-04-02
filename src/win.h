@@ -220,7 +220,7 @@ win_t* create_win(uint32_t x_res, uint32_t y_res) {
 	// extra window setup
 
 	win_set_caption(self, "Gamejam 2022");
-	win_set_exclusive_mouse(self, true);
+	win_set_exclusive_mouse(self, false);
 
 	// create context with EGL
 
@@ -267,6 +267,8 @@ win_t* create_win(uint32_t x_res, uint32_t y_res) {
 	}
 
 	const int context_attribs[] = {
+		// OpenGL ES 3.0
+
 		EGL_CONTEXT_MAJOR_VERSION, 3,
 		EGL_CONTEXT_MINOR_VERSION, 0,
 		EGL_NONE
@@ -333,12 +335,29 @@ static inline void __process_event(win_t* self, int type, xcb_generic_event_t* e
 		}
 	}
 
-	else if (type == XCB_MOTION_NOTIFY) {
-		xcb_motion_notify_event_t* detail = (void*) event;
-
-		self->mouse_dx = detail->event_x - self->x_res / 2;
-		self->mouse_dy = detail->event_y - self->y_res / 2;
+	else if (type == XCB_KEY_RELEASE) {
+		xcb_key_release_event_t* detail = (void*) event;
+		xcb_keycode_t key = detail->detail;
 	}
+
+	else if (type == XCB_BUTTON_PRESS) {
+		xcb_button_press_event_t* detail = (void*) event;
+		win_set_exclusive_mouse(self, true);
+	}
+
+	#define GENERIC_MOTION_EVENT(T, name) \
+		else if (type == XCB_##name) { \
+			T* detail = (void*) event; \
+			\
+			self->mouse_dx = detail->event_x - self->x_res / 2; \
+			self->mouse_dy = detail->event_y - self->y_res / 2; \
+		}
+
+	GENERIC_MOTION_EVENT(xcb_motion_notify_event_t, MOTION_NOTIFY)
+	GENERIC_MOTION_EVENT(xcb_enter_notify_event_t,  ENTER_NOTIFY )
+	GENERIC_MOTION_EVENT(xcb_leave_notify_event_t,  LEAVE_NOTIFY )
+
+	#undef GENERIC_MOTION_EVENT
 }
 
 void win_loop(win_t* self, int (*draw_cb) (void* param, float dt), void* param) {

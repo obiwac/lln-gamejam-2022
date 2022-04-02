@@ -29,7 +29,7 @@ int draw(void *param, float dt)
 	game_t *self = param;
 	gl_funcs_t *gl = &self->gl;
 
-	LOG("FPS: %f\n", 1 / dt)
+	// LOG("FPS: %f\n", 1 / dt)
 
 	char caption[256];
 	snprintf(caption, sizeof caption, "Gamejam 2022 (%d FPS)", (int) (1 / dt));
