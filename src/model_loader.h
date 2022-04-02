@@ -33,10 +33,9 @@ static void ivx_free(ivx_t* ivx) {
 	free(ivx);
 }
 
-object_t* load_model(gl_funcs_t *gl, const char* src, shader_t* shader, bool autorender) {
+object_t* load_model(gl_funcs_t *gl, const char* src, shader_t* shader, bool auto_render) {
     ivx_t* ivx = (ivx_t*)calloc(1, sizeof *ivx);
     object_t *self = (object_t *)calloc(1, sizeof(*self));
-    self->shader = shader;
 
 	FILE* fp = fopen(src, "r");
 
@@ -61,52 +60,12 @@ object_t* load_model(gl_funcs_t *gl, const char* src, shader_t* shader, bool aut
 		WARN("Wrong IVX version (v6.9 required)")
 		return NULL;
 	}
-
-	// VAO
-
-	gl->GenVertexArrays(1, &ivx->vao);
-	gl->BindVertexArray(ivx->vao);
-
-	self->vao = ivx->vao;
-
-	// VBO
-
-	gl->GenBuffers(1, &ivx->vbo);
-	gl->BindBuffer(GL_ARRAY_BUFFER, ivx->vbo);
-	gl->BufferData(GL_ARRAY_BUFFER, ivx->header->vertex_count * sizeof(float) * ivx->header->components, ivx->data + ivx->header->offset, GL_STATIC_DRAW);
-
-	// IBO
-
-	gl->GenBuffers(1, &ivx->ibo);
-	gl->BindBuffer(GL_ELEMENT_ARRAY_BUFFER, ivx->ibo);
-	gl->BufferData(GL_ELEMENT_ARRAY_BUFFER, ivx->header->index_count * sizeof(uint32_t), ivx->data + ivx->header->index_offset, GL_STATIC_DRAW);
-
-	// attributes
-
-	gl->EnableVertexAttribArray(0);
-	gl->VertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,  sizeof(float) * 8, (void *)0);
-
-	gl->EnableVertexAttribArray(1);
-	gl->VertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE,  sizeof(float) * 8, (void *) (3 * sizeof(float)));
-
-	gl->EnableVertexAttribArray(2);
-	gl->VertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE,  sizeof(float) * 8, (void *) ((3 + 2) * sizeof(float)));
-
-	//Set default values:
-	for(unsigned int i = 0; i < 4 ; i++)
-	{
-		self->transform.translation[i] = 1;
-		self->transform.rotation[i] = 1;
-		self->transform.scale[i] = 1;
-	}
-
-	if(autorender){
-		object_a[render_object_count] = self;
-		render_object_count++;
-	}
-
-	self->indice_count = ivx->header->index_count;
-
-	object_count++;
+	
+	self = create_object(gl, shader,
+	 auto_render,
+	  ivx->data + ivx->header->offset, 
+	  ivx->header->vertex_count * sizeof(float) * ivx->header->components,
+	  ivx->data + ivx->header->index_offset,
+	  ivx->header->index_count * sizeof(uint32_t));
 	return self;
 }

@@ -32,6 +32,9 @@ typedef struct
 
 	shader_t *shader;
 	transform_t transform;
+
+	matrix_t transform_matrix;
+
 } object_t;
 
 typedef struct
@@ -76,10 +79,10 @@ object_t *create_object(gl_funcs_t *gl, shader_t *shader,bool auto_render,vertex
 	gl->BufferData(GL_ELEMENT_ARRAY_BUFFER,indice_size,indices,GL_STATIC_DRAW);
 
 	//Set default values:
-	for(unsigned int i = 0; i < 4 ; i++)
+	for(unsigned int i = 0; i < 3 ; i++)
 	{
-		self->transform.translation[i] = 1;
-		self->transform.rotation[i] = 1;
+		self->transform.translation[i] = 0;
+		self->transform.rotation[i] = 0;
 		self->transform.scale[i] = 1;
 	}
 

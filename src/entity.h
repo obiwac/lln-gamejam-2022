@@ -22,3 +22,7 @@ entity_t* new_entity(void) {
 
 	return entity;
 }
+
+void teleport(entity_t* entity, float pos[3]) {
+
+}

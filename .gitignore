@@ -3,3 +3,4 @@ bin
 work
 *.core
 *.ivx
+obj-to-ivx
