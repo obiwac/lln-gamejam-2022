@@ -63,3 +63,11 @@ GLuint loadcubemap(gl_funcs_t*gl, char* directory)
     gl->BindTexture(GL_TEXTURE_CUBE_MAP, 0);
     return texture;
 }
+
+GLuint create_albedo_tex_array(gl_funcs_t*gl)
+{
+	GLuint texture;
+	gl->GenTextures(1,&texture);
+	gl->BindTexture(GL_TEXTURE_2D_ARRAY,texture);
+
+}

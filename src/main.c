@@ -5,6 +5,7 @@
 #include "matrix.h"
 #include "vertex.h"
 #include "model_loader.h"
+#include "skybox.h"
 
 
 // forward declarations
@@ -39,30 +40,7 @@ static float x, y = 0;
 static object_t* default_quad;
 static skybox_t* sky;
 
-void draw_skybox(game_t* self,skybox_t* skybox)
-{
-	gl_funcs_t* gl = &self->gl;
 
-	matrix_t viewmat,mvp;
-	matrix_copy(viewmat,self->mv_matrix);
-
-	viewmat[3][0] = 0.0f;
-	viewmat[3][1] = 0.0f;
-	viewmat[3][2] = 0.0f;
-
-	matrix_multiply(mvp, self->p_matrix, viewmat);
-	shader_uniform(skybox->object->shader, "mvp_ma", &mvp);
-
-	gl->DepthFunc(GL_EQUAL);
-	gl->DepthMask(GL_FALSE);
-	gl->BindTexture(GL_TEXTURE_CUBE_MAP, skybox->texture);
-
-	render_object(&self->gl, skybox->object);
-
-	gl->DepthMask(GL_TRUE);
-	gl->DepthFunc(GL_LESS);
-	gl->Enable(GL_DEPTH_TEST);
-}
 
 int draw(void *param, float dt)
 {
@@ -78,7 +56,7 @@ int draw(void *param, float dt)
 	use_fbo(self->combine_fbo);
 
 	// Draw Skybox:
-	draw_skybox(self,sky);
+	draw_skybox(&self->gl,self->p_matrix,self->mv_matrix,sky);
 
 	// projection matrix
 	matrix_identity(self->p_matrix);
@@ -121,6 +99,7 @@ int draw(void *param, float dt)
 	return 0;
 }
 
+
 int resize(void* param, uint32_t x_res, uint32_t y_res) {
 	game_t* self = param;
 	gl_funcs_t* gl = &self->gl;
@@ -134,35 +113,6 @@ int resize(void* param, uint32_t x_res, uint32_t y_res) {
 	return 0;
 }
 
-skybox_t* create_skybox(gl_funcs_t* gl)
-{
-		//Create a cube - "cube"map :)
-	vertex_t cube[] =
-	 {
-	 	{.position = {-1.0f, -1.0, -1.0f}},
-	 	{.position = {1.0f, -1.0f, -1.0f}},
-	 	{.position = {1.0f, 1.0f, -1.0f}},
-	 	{.position = {-1.0f,  1.0f, -1.0f}},
-	 	{.position = {-1.0f,  -1.0f, 1.0f}},
-	 	{.position = {1.0f,  -1.0f, 1.0f}},
-	 	{.position = {1.0f,  1.0f, 1.0f}},
-	 	{.position = {-1.0f,  1.0f, 1.0f}}
-	 };
-	uint32_t indices[6 * 6] =
-	{
-    0, 1, 3, 3, 1, 2,
-    1, 5, 2, 2, 5, 6,
-    5, 4, 6, 6, 4, 7,
-    4, 0, 7, 7, 0, 3,
-    3, 2, 7, 7, 2, 6,
-    4, 5, 0, 0, 5, 1
-	};
-	skybox_t* self =  (skybox_t *)calloc(1, sizeof(*self));
-	shader_t* shader = create_shader(gl, "skybox");
-	self->texture =  loadcubemap(gl,"rsc/Textures/skybox/%s");
-	self->object =   create_object(gl, shader,true,cube,sizeof(cube),indices,sizeof(indices));
-	return self;
-}
 
 static void gl_func_not_loaded(void)
 {
