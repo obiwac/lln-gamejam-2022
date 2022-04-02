@@ -10,5 +10,5 @@ uniform sampler2D framebuffer;
 
 void main(void)
 {
-   color = texture(framebuffer,texCoord);
+   color = texture(framebuffer,texCoord) * vec4(1.0, 1.0, 1.0, 1.0);
 }
