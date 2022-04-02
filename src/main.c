@@ -3,6 +3,9 @@
 #include "log.h"
 #include "win.h"
 #include "matrix.h"
+#include "vertex.h"
+#include "model_loader.h"
+
 
 // forward declarations
 
@@ -71,6 +74,7 @@ int draw(void *param, float dt)
 
 	// projection matrix
 	matrix_identity(self->p_matrix);
+	matrix_translate(self->mv_matrix,(float[3]){dt,0,1});
 	matrix_perspective(self->p_matrix, 90, (float) self->win->x_res / self->win->y_res, 0.1, 500);
 
 	x += self->win->mouse_dx / 100.0;
@@ -79,7 +83,7 @@ int draw(void *param, float dt)
 	// model-view matrix
 	matrix_identity(self->mv_matrix);
 	matrix_translate(self->mv_matrix, (float[3]) { 0, 0, -1 });
-	matrix_rotate_2d(self->mv_matrix, (float[2]) { x, y });
+	matrix_translate(self->mv_matrix, (float[2]) { x, y ,1.0});
 
 	// model-view-projection matrix
 	matrix_multiply(self->mvp_matrix, self->p_matrix, self->mv_matrix);
@@ -227,8 +231,8 @@ int main(int argc, char** argv)
 	unsigned int indices[3] = {0,1,2};
 
 	object_t *testTriangle;
-	testTriangle = create_object(&game.gl, shader,true,vert,sizeof(vert),indices,sizeof(indices));
-	testTriangle->tex_albedo = loadTexture2D(&game.gl,"rsc/Textures/checkboard.png");
+	//testTriangle = create_object(&game.gl, shader,true,vert,sizeof(vert),indices,sizeof(indices));
+	//testTriangle->tex_albedo = loadTexture2D(&game.gl,"rsc/Textures/checkboard.png");
 
 
 	vertex_t quad[] =
@@ -245,6 +249,8 @@ int main(int argc, char** argv)
 	game.combine_fbo = new_fbo(&game, 1.0, 1.0);
 
 	// register callbacks & start gameloop
+	
+	load_model(&game.gl,"rsc/Models/suzanne.ivx",shader,true);
 
 	win->draw_cb = draw;
 	win->draw_param = &game;

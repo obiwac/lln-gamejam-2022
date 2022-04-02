@@ -1,3 +1,5 @@
+#pragma once
+
 #include "gl/gl.h"
 
 typedef struct

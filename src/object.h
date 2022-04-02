@@ -7,8 +7,8 @@
 
 #include <malloc.h>
 #include <stdlib.h>
+#include "vertex.h"
 #include "shader.h"
-
 
 typedef struct
 {
@@ -44,7 +44,6 @@ static object_t* object_a[255];
 static unsigned int render_object_count = 0;
 static unsigned int object_count = 0;
 
-
 object_t *create_object(gl_funcs_t *gl, shader_t *shader,bool auto_render,vertex_t *vert,unsigned int vert_size,unsigned int* indices,unsigned int indice_size)
 {
 	object_t *self = (object_t *)calloc(1, sizeof(*self));
@@ -56,8 +55,7 @@ object_t *create_object(gl_funcs_t *gl, shader_t *shader,bool auto_render,vertex
 	gl->BindVertexArray(self->vao);
 
 	gl->BindBuffer(GL_ARRAY_BUFFER, self->vbo);
-	printf("%i \n",vert_size);
-	printf("%i \n",indice_size);
+	
 	gl->BufferData(GL_ARRAY_BUFFER, vert_size, vert, GL_STATIC_DRAW);
 
 	// ugly but simple :)
