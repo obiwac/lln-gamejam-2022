@@ -315,6 +315,11 @@ win_t* create_win(uint32_t x_res, uint32_t y_res) {
 static inline void __process_event(win_t* self, int type, xcb_generic_event_t* event) {
 	gl_funcs_t* gl = self->gl;
 
+	// make resolutions even to make integer division easier later on
+
+	uint32_t x_res = self->x_res - (self->x_res & 1);
+	uint32_t y_res = self->y_res + (self->y_res & 1);
+
 	if (type == XCB_CLIENT_MESSAGE) {
 		xcb_client_message_event_t* specific = (void*) event;
 
@@ -361,8 +366,8 @@ static inline void __process_event(win_t* self, int type, xcb_generic_event_t* e
 		else if (type == XCB_##name) { \
 			T* detail = (void*) event; \
 			\
-			self->mouse_dx = detail->event_x - self->x_res / 2; \
-			self->mouse_dy = detail->event_y - self->y_res / 2; \
+			self->mouse_dx = detail->event_x - x_res / 2; \
+			self->mouse_dy = detail->event_y - y_res / 2; \
 		}
 
 	GENERIC_MOTION_EVENT(xcb_motion_notify_event_t, MOTION_NOTIFY)
