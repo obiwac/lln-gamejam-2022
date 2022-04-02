@@ -123,7 +123,6 @@ void render_object(gl_funcs_t *gl, object_t *self)
 	gl->DrawElements(GL_TRIANGLES, self->indice_count,GL_UNSIGNED_INT,0);
 	gl->BindVertexArray(0);
 
-	GLuint location = 0; // TODO
 
 	// shader_uniform(location, self->tex_albedo);
 }

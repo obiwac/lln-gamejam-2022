@@ -100,8 +100,8 @@ void draw_skybox(game_t* self,skybox_t* skybox)
 	viewmat[3][0] = 0.0f;
 	viewmat[3][1] = 0.0f;
 	viewmat[3][2] = 0.0f;
-	matrix_multiply(&mvp, &self->p_matrix, &viewmat);
-	shader_uniform(skybox->object->shader, "mvp_matrix", &mvp);
+	matrix_multiply(mvp, self->p_matrix, viewmat);
+	shader_uniform(skybox->object->shader, "mvp_ma", &mvp);
 	self->gl.DepthMask(GL_FALSE);
 	self->gl.BindTexture(GL_TEXTURE_CUBE_MAP, skybox->texture);
 	render_object(&self->gl,skybox->object);
@@ -221,6 +221,7 @@ int main(int argc, char** argv)
 	GL_REQUIRE(&game, BindFramebuffer)
 	GL_REQUIRE(&game, FramebufferTexture2D)
 	GL_REQUIRE(&game, DepthMask)
+	GL_REQUIRE(&game, GetError)
 
 	sky = create_skybox(&game.gl);
 	shader_t* shader = create_shader(&game.gl, "default");
