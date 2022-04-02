@@ -8,7 +8,7 @@ typedef struct
 	GLuint texture;
 }skybox_t;
 
-void draw_skybox(gl_funcs_t* gl ,matrix_t p_matrix,matrix_t mv_matrix, skybox_t* skybox)
+void draw_skybox(gl_funcs_t* gl, matrix_t p_matrix, matrix_t mv_matrix, skybox_t* skybox)
 {
 
 	matrix_t viewmat,new_mvp;
