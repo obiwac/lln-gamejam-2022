@@ -40,6 +40,8 @@ typedef struct {
 
 	fbo_t** fbos;
 	size_t fbo_count;
+
+	float time;
 } game_t;
 
 #include "events.h"
@@ -63,6 +65,8 @@ int draw(void *param, float dt)
 	if (dt > 1. / 20) {
 		dt = 1. / 60;
 	}
+
+	self->time += dt;
 
 	// LOG("FPS: %f\n", 1 / dt)
 
@@ -105,6 +109,7 @@ int draw(void *param, float dt)
 
 		shader_uniform(object_a[i]->shader, "transform_matrix", &object_a[i]->transform_matrix);
 		shader_uniform(object_a[i]->shader, "tint", ((float[4]) { 0.0, 0.0, 1.0, 1.0 }));
+		shader_uniform(object_a[i]->shader, "time", self->time);
 		shader_uniform(object_a[i]->shader, "mvp_matrix", &self->mvp_matrix);
 
 		shader_uniform(object_a[i]->shader, "camera_pos", ((float[4]) {
@@ -271,7 +276,7 @@ int main(int argc, char** argv)
 	// register callbacks & start gameloop
 
 	object_t* obj = load_model(&game.gl, "obj-to-ivx/output.ivx", shader, true);
-	obj->tex_albedo = loadTexture2D(&game.gl, "work/lightmap.png");
+	obj->tex_albedo = loadTexture2D(&game.gl, "work/8k.png");
 
 	obj->transform.scale[0] = 10.0;
 	obj->transform.scale[1] = 10.0;

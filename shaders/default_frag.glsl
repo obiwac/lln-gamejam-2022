@@ -7,6 +7,7 @@ layout(location=0) out vec4 colour;
 in vec4 local_pos;
 in vec2 texCoord;
 in vec3 normal;
+in float strength;
 
 uniform vec4 tint;
 
@@ -30,5 +31,9 @@ void main(void) {
 		// vec4 reflected_colour = texture(skybox, reflected);
 
 		colour = mix(refracted_colour, colour, 0.5);
+	}
+
+	if (local_pos.x > 0.0 && colour.g > 0.95 && colour.b > 0.95) {
+		colour = mix(vec4(1.0, 1.0, 0.7, 1.0), vec4(0.7, 1.0, 0.7, 1.0), strength / 2.0 + 0.5);
 	}
 }
