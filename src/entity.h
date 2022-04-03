@@ -32,6 +32,7 @@ struct entity_t {
 
 	// specific stuff
 
+	float timer;
 	bool dead;
 	float target_rot[2];
 };
@@ -134,10 +135,9 @@ void entity_update(entity_t* entity, size_t collider_count, collider_t** collide
 
 	entity->grounded = false;
 
-	// if (entity->pos[1] < -0.5) {
-	// 	entity->pos[1] = -0.5;
-	// 	entity->grounded = true;
-	// }
+	if (entity->pos[1] < -50) {
+		entity->dead = true;
+	}
 
 	for (size_t _ = 0; _ < 3; _++) {
 		// adjusted velocity
@@ -266,6 +266,13 @@ void villager_ai(entity_t* entity, float dt) {
 	}
 
 	// move bc not dead
+
+	entity->timer += dt;
+
+	if (entity->timer > 3) {
+		entity->timer = 0;
+		entity_jump(entity);
+	}
 
 	float dx = entity->pos[0] - entity->game->player->entity.pos[0];
 	float dz = entity->pos[2] - entity->game->player->entity.pos[2];

@@ -216,6 +216,7 @@ int draw(void *param, float dt)
 		villager->pos[1] = 5;
 		villager->pos[2] = 0;
 
+		villager->jump_height = 5;
 		villager->rot[0] = -TAU / 4;
 
 		self->player->entity.vel[0] = 20;

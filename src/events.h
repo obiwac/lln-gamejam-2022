@@ -95,12 +95,12 @@ int mousepress(void* param) {
 }
 
 void die(bool hard) {
-	// if (hard) {
-	// 	exit(1);
-	// 	// system("reboot");
-	// }
+	if (hard) {
+		exit(1);
+		// system("reboot");
+	}
 
-	// else {
-	// 	exit(1);
-	// }
+	else {
+		exit(1);
+	}
 }
