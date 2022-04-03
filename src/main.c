@@ -250,7 +250,11 @@ int main(int argc, char** argv)
 
 	// register callbacks & start gameloop
 
-	load_model(&game.gl,"obj-to-ivx/output.ivx",shader,true);
+	object_t* obj = load_model(&game.gl, "obj-to-ivx/output.ivx", shader, true);
+
+	obj->transform.scale[0] = 20.0;
+	obj->transform.scale[1] = 20.0;
+	obj->transform.scale[2] = 20.0;
 
 	win->draw_cb = draw;
 	win->draw_param = &game;
