@@ -4,14 +4,7 @@
 
 #include <math.h>
 
-struct player_t {
-	entity_t entity;
-
-	int32_t input[2];
-	float target_rot[2];
-
-	float eyelevel;
-};
+// struct player_t in entity.h
 
 player_t* new_player(game_t* game) {
 	player_t* player = calloc(1, sizeof *player);

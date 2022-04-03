@@ -29,6 +29,20 @@ struct entity_t {
 	bool grounded;
 
 	void (*ai_cb) (entity_t* entity, float dt);
+
+	// specific stuff
+
+	bool dead;
+	float target_rot[2];
+};
+
+struct player_t { // from player.h
+	entity_t entity;
+
+	int32_t input[2];
+	float target_rot[2];
+
+	float eyelevel;
 };
 
 void update_collider(entity_t* entity) {
@@ -120,8 +134,8 @@ void entity_update(entity_t* entity, size_t collider_count, collider_t** collide
 
 	entity->grounded = false;
 
-	if (entity->pos[1] < 0) {
-		entity->pos[1] = 0;
+	if (entity->pos[1] < -0.5) {
+		entity->pos[1] = -0.5;
 		entity->grounded = true;
 	}
 
@@ -241,5 +255,29 @@ void pig_ai(entity_t* entity, float dt) {
 }
 
 void firefighter_ai(entity_t* entity, float dt) {
-	entity->acc[0] = 3;
+	float speed = 5;
+
+	if (dt * speed > 1) {
+		memcpy(entity->rot, entity->target_rot, sizeof entity->rot);
+	}
+
+	else {
+		entity->rot[0] += (entity->target_rot[0] - entity->rot[0]) * dt * speed;
+		entity->rot[1] += (entity->target_rot[1] - entity->rot[1]) * dt * speed;
+	}
+
+	if (entity->dead) {
+		entity->target_rot[1] = TAU / 4;
+		return;
+	}
+
+	// move bc not dead
+
+	if (entity->grounded) {
+		entity_jump(entity);
+		entity->target_rot[0] = atan2(entity->pos[0] - entity->game->player->entity.pos[0], entity->pos[2] - entity->game->player->entity.pos[2]) + TAU / 2;
+	}
+
+	entity->acc[0] = -cos(entity->rot[0] + TAU / 4) * 3;
+	entity->acc[2] =  sin(entity->rot[0] + TAU / 4) * 3;
 }
