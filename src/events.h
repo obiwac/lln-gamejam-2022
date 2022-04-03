@@ -93,3 +93,14 @@ int mousepress(void* param) {
 
 	return 0;
 }
+
+void die(bool hard) {
+	// if (hard) {
+	// 	exit(1);
+	// 	// system("reboot");
+	// }
+
+	// else {
+	// 	exit(1);
+	// }
+}

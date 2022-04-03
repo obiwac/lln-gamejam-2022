@@ -1,5 +1,7 @@
 #include "gl/gl.h"
 
+#include <stdbool.h>
+void die(bool hard);
 #define TAU 6.28318
 
 #include "log.h"
@@ -78,6 +80,8 @@ static object_t* default_quad;
 static skybox_t* sky;
 
 static entity_t* firefighter = NULL;
+static entity_t* villager = NULL;
+static entity_t* nain = NULL;
 
 entity_t* add_entity(game_t* self, const char* model, const char* texture, void (*ai_cb) (entity_t* entity, float dt)) {
 	gl_funcs_t* gl = &self->gl;
@@ -85,8 +89,8 @@ entity_t* add_entity(game_t* self, const char* model, const char* texture, void 
 
 	entity->ai_cb = ai_cb;
 
-	entity->object = load_model(gl, "rsc/firefighter.ivx", self->entity_shader, true);
-	entity->object->tex_albedo = loadTexture2D(gl, "rsc/cardboard.png");
+	entity->object = load_model(gl, model, self->entity_shader, true);
+	entity->object->tex_albedo = loadTexture2D(gl, texture);
 
 	self->entities = realloc(self->entities, ++self->entity_count * sizeof *self->entities);
 	self->entities[self->entity_count - 1] = entity;
@@ -196,17 +200,64 @@ int draw(void *param, float dt)
 
 	// triggers
 
-	if (!firefighter && self->player->entity.pos[0] > 40) {
+	if (self->player->entity.pos[1] < -50) {
+		die(true);
+	}
+
+	if (!villager && self->player->entity.pos[0] > 7) {
+		villager = add_entity(self, "rsc/villager.ivx", "rsc/villager.png", villager_ai);
+
+		villager->pos[0] = 28;
+		villager->pos[1] = 5;
+		villager->pos[2] = 0;
+
+		villager->rot[0] = -TAU / 4;
+
+		self->player->entity.vel[0] = 20;
+		self->player->entity.vel[1] = sqrt(-2 * GRAVITY * 10);
+	}
+
+	if (villager && !villager->dead) {
+		for (size_t i = 0; i < self->entity_count; i++) {
+			entity_t* entity = self->entities[i];
+
+			if (entity->ai_cb != pig_ai) {
+				continue;
+			}
+
+			if (!entity->dead) {
+				goto skip;
+			}
+		}
+
+		villager->dead = true;
+		skip: {}
+	}
+
+	if (villager && villager->dead && !firefighter && self->player->entity.pos[0] > 31) {
 		firefighter = add_entity(self, "rsc/firefighter.ivx", "rsc/cardboard.png", firefighter_ai);
 
 		firefighter->pos[0] = 51;
 		firefighter->pos[1] = 5;
 		firefighter->pos[2] = 6;
-	}
 
-	if (firefighter && firefighter->dead && self->player->entity.pos[0] > 57 && self->player->entity.pos[0] < 58) {
 		self->player->entity.vel[0] = 30;
 		self->player->entity.vel[1] = sqrt(-2 * GRAVITY * 10);
+	}
+
+	if (firefighter && firefighter->dead && !nain && self->player->entity.pos[0] > 57) {
+		nain = add_entity(self, "rsc/nain.ivx", "rsc/tete.png", nain_ai);
+
+		self->player->entity.vel[0] = 30;
+		self->player->entity.vel[1] = sqrt(-2 * GRAVITY * 10);
+
+		nain->pos[0] = 84;
+		nain->pos[1] = 1;
+		nain->pos[2] = -5.5;
+
+		nain->object->transform.scale[0] = 0.1;
+		nain->object->transform.scale[1] = 0.1;
+		nain->object->transform.scale[2] = 0.1;
 	}
 
 	return 0;
@@ -353,12 +404,25 @@ int main(int argc, char** argv)
 
 	// add passive entities
 
-	// int x = 24;
-	// int y = 0;
+	int x = 24;
+	int y = 0;
 
-	// for (size_t i = 0; i < 5; i++) {
-	// 	add_entity(&game, "rsc/pig.ivx", "rsc/pig.png", pig_ai);
-	// }
+	#define PIGS 5
+
+	for (size_t i = 0; i < PIGS; i++) {
+		entity_t* pig = add_entity(&game, "rsc/pig.ivx", "rsc/pig.png", pig_ai);
+		float angle = TAU / PIGS * i;
+
+		pig->pos[0] = x + sin(angle) * 5;
+		pig->pos[1] = angle / 5;
+		pig->pos[2] = y + cos(angle) * 5;
+
+		pig->rot[0] = angle;
+
+		pig->object->transform.scale[0] = 1.5;
+		pig->object->transform.scale[1] = 1.5;
+		pig->object->transform.scale[2] = 1.5;
+	}
 
 	// register callbacks & start gameloop
 

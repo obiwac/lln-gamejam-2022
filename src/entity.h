@@ -249,6 +249,42 @@ void entity_update(entity_t* entity, size_t collider_count, collider_t** collide
 // entity-specific AI
 
 void villager_ai(entity_t* entity, float dt) {
+	float speed = 5;
+
+	if (dt * speed > 1) {
+		memcpy(entity->rot, entity->target_rot, sizeof entity->rot);
+	}
+
+	else {
+		entity->rot[0] += (entity->target_rot[0] - entity->rot[0]) * dt * speed;
+		entity->rot[1] += (entity->target_rot[1] - entity->rot[1]) * dt * speed;
+	}
+
+	if (entity->dead) {
+		entity->target_rot[1] = -TAU / 4;
+		return;
+	}
+
+	// move bc not dead
+
+	float dx = entity->pos[0] - entity->game->player->entity.pos[0];
+	float dz = entity->pos[2] - entity->game->player->entity.pos[2];
+
+	if (entity->grounded) {
+		// entity_jump(entity);
+		entity->target_rot[0] = -atan2(dz, dx) - TAU / 4;
+	}
+
+	entity->acc[0] = -cos(entity->rot[0] + TAU / 4) * 3;
+	entity->acc[2] =  sin(entity->rot[0] + TAU / 4) * 3;
+
+	// check if within killing distance of player
+
+	float dist = sqrt(dx * dx + dz * dz);
+
+	if (dist < 2) {
+		die(false);
+	}
 }
 
 void pig_ai(entity_t* entity, float dt) {
@@ -306,6 +342,47 @@ void firefighter_ai(entity_t* entity, float dt) {
 	float dist = sqrt(dx * dx + dz * dz);
 
 	if (dist < 1) {
-		exit(1);
+		die(false);
+	}
+}
+
+void nain_ai(entity_t* entity, float dt) {
+	float speed = 5;
+
+	if (dt * speed > 1) {
+		memcpy(entity->rot, entity->target_rot, sizeof entity->rot);
+	}
+
+	else {
+		entity->rot[0] += (entity->target_rot[0] - entity->rot[0]) * dt * speed;
+		entity->rot[1] += (entity->target_rot[1] - entity->rot[1]) * dt * speed;
+	}
+
+	if (entity->dead) {
+		entity->target_rot[1] = -TAU / 4;
+		return;
+	}
+
+	// move bc not dead
+
+	float dx = entity->pos[0] - entity->game->player->entity.pos[0];
+	float dy = entity->pos[1] - entity->game->player->entity.pos[1];
+	float dz = entity->pos[2] - entity->game->player->entity.pos[2];
+
+	if (entity->grounded) {
+		entity->target_rot[0] = -atan2(dz, dx) - TAU / 4;
+	}
+
+	entity->acc[0] = -cos(entity->rot[0] + TAU / 4) * 3;
+	entity->acc[2] =  sin(entity->rot[0] + TAU / 4) * 3;
+
+	// check if within killing distance of player
+
+	float dist = sqrt(dx * dx + dy * dy + dz * dz);
+
+	if (dist < 2) {
+		 entity->game->player->entity.vel[0] = entity->acc[0] * 10;
+		 entity->game->player->entity.vel[1] = sqrt(-2 * GRAVITY * 20);
+		 entity->game->player->entity.vel[2] = entity->acc[2] * 10;
 	}
 }
