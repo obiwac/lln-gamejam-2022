@@ -351,6 +351,15 @@ int main(int argc, char** argv)
 	add_collider(&game, (float[3]) { -14.70, 0, -0.44 }, (float[3]) { -12.38, 10, 0.88 });
 	add_collider(&game, (float[3]) { -7.37, 0, -2.21 }, (float[3]) { -7.06, 10, -4.80 });
 
+	// add passive entities
+
+	// int x = 24;
+	// int y = 0;
+
+	// for (size_t i = 0; i < 5; i++) {
+	// 	add_entity(&game, "rsc/pig.ivx", "rsc/pig.png", pig_ai);
+	// }
+
 	// register callbacks & start gameloop
 
 	object_t* obj = load_model(&game.gl, "rsc/map.ivx", game.shader, true);

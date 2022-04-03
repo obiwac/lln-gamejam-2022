@@ -252,6 +252,23 @@ void villager_ai(entity_t* entity, float dt) {
 }
 
 void pig_ai(entity_t* entity, float dt) {
+	float speed = 5;
+
+	if (dt * speed > 1) {
+		entity->rot[1] = entity->target_rot[1];
+	}
+
+	else {
+		entity->rot[1] += (entity->target_rot[1] - entity->rot[1]) * dt * speed;
+	}
+
+	if (entity->dead) {
+		entity->target_rot[1] = -TAU / 4;
+		return;
+	}
+
+	entity_jump(entity);
+	entity->rot[0] += dt;
 }
 
 void firefighter_ai(entity_t* entity, float dt) {
