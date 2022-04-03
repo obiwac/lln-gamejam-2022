@@ -134,10 +134,10 @@ void entity_update(entity_t* entity, size_t collider_count, collider_t** collide
 
 	entity->grounded = false;
 
-	if (entity->pos[1] < -0.5) {
-		entity->pos[1] = -0.5;
-		entity->grounded = true;
-	}
+	// if (entity->pos[1] < -0.5) {
+	// 	entity->pos[1] = -0.5;
+	// 	entity->grounded = true;
+	// }
 
 	for (size_t _ = 0; _ < 3; _++) {
 		// adjusted velocity
@@ -229,10 +229,10 @@ void entity_update(entity_t* entity, size_t collider_count, collider_t** collide
 
 	// last collision check
 
-	if (entity->pos[1] < 0) {
-		entity->pos[1] = 0;
-		entity->grounded = true;
-	}
+	// if (entity->pos[1] < 0) {
+	// 	entity->pos[1] = 0;
+	// 	entity->grounded = true;
+	// }
 
 	// make sure we can rely on the entity's collider outside of this function
 
