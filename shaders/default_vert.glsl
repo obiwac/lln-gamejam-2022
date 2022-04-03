@@ -7,13 +7,16 @@ layout(location = 1) in vec2 textureCoord;
 layout(location = 2) in vec3 normal_attr;
 
 uniform mat4 mvp_matrix;
-uniform mat4 transform_matrix; 
+uniform mat4 transform_matrix;
+
+out vec4 local_pos;
 out vec2 texCoord;
 out vec3 normal;
 
-void main(void)
-{
-    gl_Position = mvp_matrix * transform_matrix * vec4(position, 1.0);
-    texCoord = textureCoord;
-    normal = normal_attr;
+void main(void) {
+	local_pos = transform_matrix * vec4(position, 1.0);
+	gl_Position = mvp_matrix * local_pos;
+
+	texCoord = textureCoord;
+	normal = normal_attr;
 }

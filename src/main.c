@@ -79,11 +79,6 @@ int draw(void *param, float dt)
 	update_mouse(self);
 	player_update(self->player, self->collider_count, self->colliders, dt);
 
-	// RENDER SHIT
-
-	// Draw Skybox:
-	draw_skybox(&self->gl,self->p_matrix,self->mv_matrix,sky);
-
 	// projection matrix
 
 	matrix_identity(self->p_matrix);
@@ -100,6 +95,11 @@ int draw(void *param, float dt)
 	// model-view-projection matrix
 	matrix_multiply(self->mvp_matrix, self->p_matrix, self->mv_matrix);
 
+	// RENDER SHIT
+
+	// Draw Skybox:
+	draw_skybox(&self->gl,self->p_matrix,self->mv_matrix,sky);
+
 	for (size_t i = 0; i < render_object_count; i++) {
 		matrix_transform(object_a[i]->transform_matrix, object_a[i]->transform.translation, object_a[i]->transform.rotation, object_a[i]->transform.scale);
 
@@ -107,8 +107,26 @@ int draw(void *param, float dt)
 		shader_uniform(object_a[i]->shader, "tint", ((float[4]) { 0.0, 0.0, 1.0, 1.0 }));
 		shader_uniform(object_a[i]->shader, "mvp_matrix", &self->mvp_matrix);
 
+		shader_uniform(object_a[i]->shader, "camera_pos", ((float[4]) {
+			self->player->entity.pos[0],
+			self->player->entity.pos[1],
+			self->player->entity.pos[2],
+			1.0,
+		}));
+
+		// texture uniforms
+
 		gl->ActiveTexture(GL_TEXTURE0);
 		gl->BindTexture(GL_TEXTURE_2D, object_a[i]->tex_albedo);
+
+		shader_uniform(object_a[i]->shader, "tex_albedo", (uint32_t) 0);
+
+		gl->ActiveTexture(GL_TEXTURE1);
+		gl->BindTexture(GL_TEXTURE_CUBE_MAP, sky->texture);
+
+		shader_uniform(object_a[i]->shader, "skybox", (uint32_t) 1);
+
+		// render object
 
 		render_object(gl, object_a[i]);
 	}
@@ -118,7 +136,8 @@ int draw(void *param, float dt)
 	gl->ClearColor(0.7, 0.1, 0.1, 1.0);
     gl->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	gl->BindTexture(GL_TEXTURE_2D,self->combine_fbo->colour_texture);
+	gl->ActiveTexture(GL_TEXTURE0);
+	gl->BindTexture(GL_TEXTURE_2D, self->combine_fbo->colour_texture);
 
 	render_object(gl, default_quad);
 
@@ -244,17 +263,19 @@ int main(int argc, char** argv)
 
 	game.combine_fbo = new_fbo(&game, 1.0, 1.0);
 
-	// TODO REMME collider test
+	// add colliders
 
-	add_collider(&game, (float[3]) { -1, -1, -1 }, (float[3]) { 1, 1, 1 });
+	add_collider(&game, (float[3]) { -144.6, -100, -18.18 }, (float[3]) { 178.64, -0.1, 15.24 });
+	add_collider(&game, (float[3]) { 154, 0, -16.47 }, (float[3]) { 165, 10, -3.79 });
 
 	// register callbacks & start gameloop
 
 	object_t* obj = load_model(&game.gl, "obj-to-ivx/output.ivx", shader, true);
+	obj->tex_albedo = loadTexture2D(&game.gl, "work/lightmap.png");
 
-	obj->transform.scale[0] = 20.0;
-	obj->transform.scale[1] = 20.0;
-	obj->transform.scale[2] = 20.0;
+	obj->transform.scale[0] = 10.0;
+	obj->transform.scale[1] = 10.0;
+	obj->transform.scale[2] = 10.0;
 
 	win->draw_cb = draw;
 	win->draw_param = &game;

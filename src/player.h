@@ -8,6 +8,8 @@ typedef struct {
 	entity_t entity;
 
 	int32_t input[2];
+	float target_rot[2];
+
 	float eyelevel;
 } player_t;
 
@@ -20,12 +22,23 @@ player_t* new_player(void) {
 	return player;
 }
 
+#define SMOOTHING 30
+
 void player_update(player_t* player, size_t collider_count, collider_t** colliders, float dt) {
+	if (dt * SMOOTHING > 1) {
+		memcpy(player->entity.rot, player->target_rot, sizeof player->entity.rot);
+	}
+
+	else {
+		player->entity.rot[0] += (player->target_rot[0] - player->entity.rot[0]) * dt * SMOOTHING;
+		player->entity.rot[1] += (player->target_rot[1] - player->entity.rot[1]) * dt * SMOOTHING;
+	}
+
 	float angle = player->entity.rot[0] - atan2(player->input[1], player->input[0]) + TAU / 4;
 
 	if (player->input[0] || player->input[1]) {
-		player->entity.acc[0] = cos(angle) * 5;
-		player->entity.acc[2] = sin(angle) * 5;
+		player->entity.acc[0] = cos(angle) * 10;
+		player->entity.acc[2] = sin(angle) * 10;
 	}
 
 	entity_update((entity_t*) player, collider_count, colliders, dt); // inheritance in C???

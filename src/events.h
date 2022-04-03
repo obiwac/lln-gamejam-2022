@@ -5,15 +5,15 @@
 #define SENSITIVITY 100.
 
 void update_mouse(game_t* self) {
-	self->player->entity.rot[0] += self->win->mouse_dx / SENSITIVITY;
-	self->player->entity.rot[1] -= self->win->mouse_dy / SENSITIVITY;
+	self->player->target_rot[0] += self->win->mouse_dx / SENSITIVITY;
+	self->player->target_rot[1] -= self->win->mouse_dy / SENSITIVITY;
 
-	if (self->player->entity.rot[1] > TAU / 4) {
-		self->player->entity.rot[1] = TAU / 4;
+	if (self->player->target_rot[1] > TAU / 4) {
+		self->player->target_rot[1] = TAU / 4;
 	}
 
-	if (self->player->entity.rot[1] < -TAU / 4) {
-		self->player->entity.rot[1] = -TAU / 4;
+	if (self->player->target_rot[1] < -TAU / 4) {
+		self->player->target_rot[1] = -TAU / 4;
 	}
 }
 
