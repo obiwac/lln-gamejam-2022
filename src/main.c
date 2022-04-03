@@ -341,7 +341,7 @@ int main(int argc, char** argv)
 	// register callbacks & start gameloop
 
 	object_t* obj = load_model(&game.gl, "rsc/map.ivx", game.shader, true);
-	obj->tex_albedo = loadTexture2D(&game.gl, "work/8k.png");
+	obj->tex_albedo = loadTexture2D(&game.gl, "rsc/8k.png");
 
 	obj->transform.scale[0] = 10.0;
 	obj->transform.scale[1] = 10.0;

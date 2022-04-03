@@ -2,5 +2,4 @@ bin
 *.sw[op]
 work
 *.core
-*.ivx
-obj-to-ivx
+obj-to-ivx/obj-to-ivx
