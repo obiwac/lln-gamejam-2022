@@ -66,6 +66,9 @@ typedef struct {
 
 	int (*keyrelease_cb) (void* params, xcb_keycode_t key);
 	void* keyrelease_param;
+
+	int (*mousepress_cb) (void* params);
+	void* mousepress_param;
 } win_t;
 
 static const char* egl_error_str(void) {
@@ -374,6 +377,10 @@ static inline void __process_event(win_t* self, int type, xcb_generic_event_t* e
 	else if (type == XCB_BUTTON_PRESS) {
 		xcb_button_press_event_t* detail = (void*) event;
 		win_set_exclusive_mouse(self, true);
+
+		if (self->mousepress_cb) {
+			self->mousepress_cb(self->mousepress_param);
+		}
 	}
 
 	#define GENERIC_MOTION_EVENT(T, name) \

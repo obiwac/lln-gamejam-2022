@@ -77,6 +77,23 @@ typedef struct {
 static object_t* default_quad;
 static skybox_t* sky;
 
+static entity_t* firefighter = NULL;
+
+entity_t* add_entity(game_t* self, const char* model, const char* texture, void (*ai_cb) (entity_t* entity, float dt)) {
+	gl_funcs_t* gl = &self->gl;
+	entity_t* entity = new_entity(self);
+
+	entity->ai_cb = ai_cb;
+
+	entity->object = load_model(gl, "rsc/firefighter.ivx", self->entity_shader, true);
+	entity->object->tex_albedo = loadTexture2D(gl, "rsc/cardboard.png");
+
+	self->entities = realloc(self->entities, ++self->entity_count * sizeof *self->entities);
+	self->entities[self->entity_count - 1] = entity;
+
+	return entity;
+}
+
 int draw(void *param, float dt)
 {
 	game_t *self = param;
@@ -177,6 +194,21 @@ int draw(void *param, float dt)
 	shader_uniform(default_quad->shader,"shake_mat",&self->shaker.shake_mat);
 	render_object(gl, default_quad);
 
+	// triggers
+
+	if (!firefighter && self->player->entity.pos[0] > 40) {
+		firefighter = add_entity(self, "rsc/firefighter.ivx", "rsc/cardboard.png", firefighter_ai);
+
+		firefighter->pos[0] = 51;
+		firefighter->pos[1] = 5;
+		firefighter->pos[2] = 6;
+	}
+
+	if (firefighter && firefighter->dead && self->player->entity.pos[0] > 57 && self->player->entity.pos[0] < 58) {
+		self->player->entity.vel[0] = 30;
+		self->player->entity.vel[1] = sqrt(-2 * GRAVITY * 10);
+	}
+
 	return 0;
 }
 
@@ -192,21 +224,6 @@ int resize(void* param, uint32_t x_res, uint32_t y_res) {
 	}
 
 	return 0;
-}
-
-entity_t* add_entity(game_t* self, const char* model, const char* texture, void (*ai_cb) (entity_t* entity, float dt)) {
-	gl_funcs_t* gl = &self->gl;
-	entity_t* entity = new_entity(self);
-
-	entity->ai_cb = ai_cb;
-
-	entity->object = load_model(gl, "rsc/firefighter.ivx", self->entity_shader, true);
-	entity->object->tex_albedo = loadTexture2D(gl, "rsc/cardboard.png");
-
-	self->entities = realloc(self->entities, ++self->entity_count * sizeof *self->entities);
-	self->entities[self->entity_count - 1] = entity;
-
-	return entity;
 }
 
 void add_collider(game_t* self, float pos1[3], float pos2[3]) {
@@ -334,10 +351,6 @@ int main(int argc, char** argv)
 	add_collider(&game, (float[3]) { -14.70, 0, -0.44 }, (float[3]) { -12.38, 10, 0.88 });
 	add_collider(&game, (float[3]) { -7.37, 0, -2.21 }, (float[3]) { -7.06, 10, -4.80 });
 
-	// load entities
-
-	entity_t* firefighter = add_entity(&game, "rsc/firefighter.ivx", "rsc/cardboard.png", firefighter_ai);
-
 	// register callbacks & start gameloop
 
 	object_t* obj = load_model(&game.gl, "rsc/map.ivx", game.shader, true);
@@ -358,6 +371,9 @@ int main(int argc, char** argv)
 
 	win->keyrelease_cb = keyrelease;
 	win->keyrelease_param = &game;
+
+	win->mousepress_cb = mousepress;
+	win->mousepress_param = &game;
 
 	win_loop(win);
 

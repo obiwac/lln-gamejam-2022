@@ -60,3 +60,36 @@ int keyrelease(void* param, xcb_keycode_t key) {
 }
 
 #undef KEY
+
+int mousepress(void* param) {
+	game_t* game = param;
+	player_t* player = game->player;
+
+	// did we hit any entities?
+
+	for (size_t i = 0; i < game->entity_count; i++) {
+		entity_t* entity = game->entities[i];
+
+		float dx = player->entity.pos[0] - entity->pos[0];
+		float dz = player->entity.pos[2] - entity->pos[2];
+
+		float dist = sqrt(dx * dx + dz * dz);
+
+		if (dist > 1.2) {
+			continue;
+		}
+
+		float angle = atan2(dz, dx);
+
+		float rx = player->entity.rot[0] + TAU / 2;
+		rx = fmod(rx + TAU / 2, TAU) - TAU / 2;
+
+		float delta = fabs(angle - rx);
+
+		if (delta < TAU / 8) {
+			entity->dead = true;
+		}
+	}
+
+	return 0;
+}

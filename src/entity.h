@@ -267,17 +267,28 @@ void firefighter_ai(entity_t* entity, float dt) {
 	}
 
 	if (entity->dead) {
-		entity->target_rot[1] = TAU / 4;
+		entity->target_rot[1] = -TAU / 4;
 		return;
 	}
 
 	// move bc not dead
 
+	float dx = entity->pos[0] - entity->game->player->entity.pos[0];
+	float dz = entity->pos[2] - entity->game->player->entity.pos[2];
+
 	if (entity->grounded) {
 		entity_jump(entity);
-		entity->target_rot[0] = atan2(entity->pos[0] - entity->game->player->entity.pos[0], entity->pos[2] - entity->game->player->entity.pos[2]) + TAU / 2;
+		entity->target_rot[0] = -atan2(dz, dx) - TAU / 4;
 	}
 
-	entity->acc[0] = -cos(entity->rot[0] + TAU / 4) * 3;
-	entity->acc[2] =  sin(entity->rot[0] + TAU / 4) * 3;
+	entity->acc[0] = -cos(entity->rot[0] + TAU / 4) * 6;
+	entity->acc[2] =  sin(entity->rot[0] + TAU / 4) * 6;
+
+	// check if within killing distance of player
+
+	float dist = sqrt(dx * dx + dz * dz);
+
+	if (dist < 1) {
+		exit(1);
+	}
 }
