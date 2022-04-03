@@ -2,11 +2,12 @@
 
 #include "log.h"
 #include "object.h"
+#include "collider.h"
 
 #include <math.h>
 #include <stdbool.h>
 
-#define GRAVITY 0 // -32
+#define GRAVITY -32
 
 typedef struct {
 	float jump_height;
@@ -17,11 +18,35 @@ typedef struct {
 	float vel[3];
 	float acc[3];
 
+	float width;
+	float height;
+
+	collider_t collider;
 	bool grounded;
 } entity_t;
 
+void update_collider(entity_t* entity) {
+	float x = entity->pos[0];
+	float y = entity->pos[1];
+	float z = entity->pos[2];
+
+	entity->collider.x1 = x - entity->width / 2;
+	entity->collider.x2 = x + entity->width / 2;
+
+	entity->collider.y1 = y;
+	entity->collider.y2 = y + entity->height;
+
+	entity->collider.z1 = z - entity->width / 2;
+	entity->collider.z2 = z + entity->width / 2;
+}
+
 void static_new_entity(entity_t* entity) {
-	entity->jump_height = 1.25; // default
+	// defaults
+
+	entity->width  = 0.6;
+	entity->height = 1.8;
+
+	entity->jump_height = 2.25;
 }
 
 entity_t* new_entity(void) {
@@ -54,7 +79,7 @@ static inline float __abs_min(float x, float y) {
 	return y;
 }
 
-void entity_update(entity_t* entity, float dt) {
+void entity_update(entity_t* entity, size_t collider_count, collider_t** colliders, float dt) {
 	// calculate friction
 
 	float fx = 1.8;
@@ -77,7 +102,88 @@ void entity_update(entity_t* entity, float dt) {
 
 	// compute collisions
 
-	// TODO
+	update_collider(entity);
+
+	entity->grounded = false;
+
+	if (entity->pos[1] < 0) {
+		entity->pos[1] = 0;
+		entity->grounded = true;
+	}
+
+	for (size_t _ = 0; _ < 3; _++) {
+		// adjusted velocity
+
+		float vx = entity->vel[0] * dt;
+		float vy = entity->vel[1] * dt;
+		float vz = entity->vel[2] * dt;
+
+		// idgaf about broad-phasing
+
+		size_t candidate_count = 0;
+
+		collider_t** candidates = NULL;
+		float* candidate_times = NULL;
+
+		for (size_t i = 0; i < collider_count; i++) {
+			collider_t* collider = colliders[i];
+			float time = collide(&entity->collider, collider, vx, vy, vz, NULL);
+
+			candidates = realloc(candidates, ++candidate_count * sizeof *candidates);
+			candidates[candidate_count - 1] = collider;
+
+			candidate_times = realloc(candidate_times, candidate_count * sizeof *candidates);
+			candidate_times[candidate_count - 1] = time;
+		}
+
+		if (!collider_count) {
+			continue;
+		}
+
+		// process candidates (get first collision)
+
+		collider_t* earliest_collider = NULL;
+		float earliest_time = 1.0;
+
+		for (size_t i = 0; i < candidate_count; i++) {
+			collider_t* collider = candidates[i];
+			float time = candidate_times[i];
+
+			if (time > earliest_time) {
+				continue;
+			}
+
+			earliest_collider = collider;
+			earliest_time = time;
+		}
+
+		free(candidates);
+		free(candidate_times);
+
+		earliest_time -= 0.001;
+
+		int norm[3] = { 0 };
+		collide(&entity->collider, earliest_collider, vx, vy, vz, norm);
+
+		if (norm[0]) {
+			entity->vel[0] = 0;
+			entity->pos[0] += vx * earliest_time;
+		}
+
+		if (norm[1]) {
+			entity->vel[1] = 0;
+			entity->pos[1] += vy * earliest_time;
+		}
+
+		if (norm[2]) {
+			entity->vel[2] = 0;
+			entity->pos[2] += vz * earliest_time;
+		}
+
+		if (norm[1] > 0) {
+			entity->grounded = true;
+		}
+	}
 
 	entity->pos[0] += entity->vel[0] * dt;
 	entity->pos[1] += entity->vel[1] * dt;
@@ -92,6 +198,13 @@ void entity_update(entity_t* entity, float dt) {
 	entity->vel[0] -= __abs_min(entity->vel[0] * fx * dt, entity->vel[0]);
 	entity->vel[1] -= __abs_min(entity->vel[1] * fy * dt, entity->vel[1]);
 	entity->vel[2] -= __abs_min(entity->vel[2] * fz * dt, entity->vel[2]);
+
+	// last collision check
+
+	if (entity->pos[1] < 0) {
+		entity->pos[1] = 0;
+		entity->grounded = true;
+	}
 
 	// make sure we can rely on the entity's collider outside of this function
 

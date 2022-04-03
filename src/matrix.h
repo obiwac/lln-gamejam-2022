@@ -75,11 +75,11 @@ static inline void matrix_rotate(matrix_t matrix, float angle, float vector[3]) 
 	rotation_matrix[0][0] = (one_minus_c * xx) + c;
 	rotation_matrix[0][1] = (one_minus_c * xy) - zs;
 	rotation_matrix[0][2] = (one_minus_c * zx) + ys;
-		
+
 	rotation_matrix[1][0] = (one_minus_c * xy) + zs;
 	rotation_matrix[1][1] = (one_minus_c * yy) + c;
 	rotation_matrix[1][2] = (one_minus_c * yz) - xs;
-		
+
 	rotation_matrix[2][0] = (one_minus_c * zx) - ys;
 	rotation_matrix[2][1] = (one_minus_c * yz) + xs;
 	rotation_matrix[2][2] = (one_minus_c * zz) + c;

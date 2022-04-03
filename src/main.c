@@ -7,6 +7,7 @@
 #include "matrix.h"
 #include "vertex.h"
 #include "model_loader.h"
+#include "skybox.h"
 #include "player.h"
 
 // forward declarations
@@ -25,6 +26,11 @@ typedef struct {
 
 	player_t* player;
 	// TODO list of entities
+
+	// colliders
+
+	size_t collider_count;
+	collider_t** colliders;
 
 	// fbos
 
@@ -49,31 +55,6 @@ typedef struct {
 static object_t* default_quad;
 static skybox_t* sky;
 
-void draw_skybox(game_t* self,skybox_t* skybox)
-{
-	gl_funcs_t* gl = &self->gl;
-
-	matrix_t viewmat,mvp;
-	matrix_copy(viewmat,self->mv_matrix);
-
-	viewmat[3][0] = 0.0f;
-	viewmat[3][1] = 0.0f;
-	viewmat[3][2] = 0.0f;
-
-	matrix_multiply(mvp, self->p_matrix, viewmat);
-	shader_uniform(skybox->object->shader, "mvp_ma", &mvp);
-
-	gl->DepthFunc(GL_EQUAL);
-	gl->DepthMask(GL_FALSE);
-	gl->BindTexture(GL_TEXTURE_CUBE_MAP, skybox->texture);
-
-	render_object(&self->gl, skybox->object);
-
-	gl->DepthMask(GL_TRUE);
-	gl->DepthFunc(GL_LESS);
-	gl->Enable(GL_DEPTH_TEST);
-}
-
 int draw(void *param, float dt)
 {
 	game_t *self = param;
@@ -96,13 +77,12 @@ int draw(void *param, float dt)
 	// PHYSICS SHIT
 
 	update_mouse(self);
-	player_update(self->player, dt);
+	player_update(self->player, self->collider_count, self->colliders, dt);
 
 	// RENDER SHIT
 
 	// Draw Skybox:
-
-	draw_skybox(self,sky);
+	draw_skybox(&self->gl,self->p_matrix,self->mv_matrix,sky);
 
 	// projection matrix
 
@@ -115,7 +95,7 @@ int draw(void *param, float dt)
 	matrix_identity(self->mv_matrix);
 
 	matrix_rotate_2d(self->mv_matrix, (float[2]) { self->player->entity.rot[0] + TAU / 4, self->player->entity.rot[1] });
-	matrix_translate(self->mv_matrix, (float[3]) { -self->player->entity.pos[0], -self->player->entity.pos[1], -self->player->entity.pos[2] });
+	matrix_translate(self->mv_matrix, (float[3]) { -self->player->entity.pos[0], -self->player->entity.pos[1] - self->player->eyelevel, -self->player->entity.pos[2] });
 
 	// model-view-projection matrix
 	matrix_multiply(self->mvp_matrix, self->p_matrix, self->mv_matrix);
@@ -145,6 +125,7 @@ int draw(void *param, float dt)
 	return 0;
 }
 
+
 int resize(void* param, uint32_t x_res, uint32_t y_res) {
 	game_t* self = param;
 	gl_funcs_t* gl = &self->gl;
@@ -158,34 +139,9 @@ int resize(void* param, uint32_t x_res, uint32_t y_res) {
 	return 0;
 }
 
-skybox_t* create_skybox(gl_funcs_t* gl)
-{
-		//Create a cube - "cube"map :)
-	vertex_t cube[] =
-	 {
-	 	{.position = {-1.0f, -1.0, -1.0f}},
-	 	{.position = {1.0f, -1.0f, -1.0f}},
-	 	{.position = {1.0f, 1.0f, -1.0f}},
-	 	{.position = {-1.0f,  1.0f, -1.0f}},
-	 	{.position = {-1.0f,  -1.0f, 1.0f}},
-	 	{.position = {1.0f,  -1.0f, 1.0f}},
-	 	{.position = {1.0f,  1.0f, 1.0f}},
-	 	{.position = {-1.0f,  1.0f, 1.0f}}
-	 };
-	uint32_t indices[6 * 6] =
-	{
-    0, 1, 3, 3, 1, 2,
-    1, 5, 2, 2, 5, 6,
-    5, 4, 6, 6, 4, 7,
-    4, 0, 7, 7, 0, 3,
-    3, 2, 7, 7, 2, 6,
-    4, 5, 0, 0, 5, 1
-	};
-	skybox_t* self =  (skybox_t *)calloc(1, sizeof(*self));
-	shader_t* shader = create_shader(gl, "skybox");
-	self->texture =  loadcubemap(gl,"rsc/Textures/skybox/%s");
-	self->object =   create_object(gl, shader,true,cube,sizeof(cube),indices,sizeof(indices));
-	return self;
+void add_collider(game_t* self, float pos1[3], float pos2[3]) {
+	self->colliders = realloc(self->colliders, ++self->collider_count * sizeof *self->colliders);
+	self->colliders[self->collider_count - 1] = new_collider(pos1, pos2);
 }
 
 static void gl_func_not_loaded(void)
@@ -287,6 +243,10 @@ int main(int argc, char** argv)
 	default_quad = create_object(&game.gl, combine_shader, false, quad, sizeof(quad), q_incides, sizeof(q_incides));
 
 	game.combine_fbo = new_fbo(&game, 1.0, 1.0);
+
+	// TODO REMME collider test
+
+	add_collider(&game, (float[3]) { -1, -1, -1 }, (float[3]) { 1, 1, 1 });
 
 	// register callbacks & start gameloop
 
