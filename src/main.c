@@ -62,6 +62,9 @@ typedef struct {
 
 	float frame_tint[4];
 
+	bool fire; 
+	bool dirt; 
+
 } game_t;
 
 #include "player.h"
@@ -202,11 +205,40 @@ int draw(void *param, float dt)
 		firefighter->pos[0] = 51;
 		firefighter->pos[1] = 5;
 		firefighter->pos[2] = 6;
+
+		firefighter->jump_height = 5;
+		self->fire = true;
+		
+
 	}
+	if(self->fire){
+	if(dt * SMOOTHING > 1){
+		self->frame_tint[0] = 0.94;
+		self->frame_tint[1] = 0.5;
+		self->frame_tint[2] = 0.180;
+	}else
+	{
+		self->frame_tint[0] += (0.94 - self->frame_tint[0] * dt * SMOOTHING);
+		self->frame_tint[1] += (0.5 - self->frame_tint[1] * dt * SMOOTHING);
+		self->frame_tint[2] += (0.180 - self->frame_tint[2] * dt * SMOOTHING);
+	}
+	}else if (self->dirt)
+	{
+		self->shaker.shake = true;
+		self->shaker.shake_intensity =  10;
+	}else
+	{
+		self->frame_tint[0] = 1;
+		self->frame_tint[1] = 1;
+		self->frame_tint[2] = 1;
+		self->frame_tint[3] = 1;
+	}
+
 
 	if (firefighter && firefighter->dead && self->player->entity.pos[0] > 57 && self->player->entity.pos[0] < 58) {
 		self->player->entity.vel[0] = 30;
 		self->player->entity.vel[1] = sqrt(-2 * GRAVITY * 10);
+		self->fire = false;
 	}
 
 	return 0;
@@ -339,17 +371,38 @@ int main(int argc, char** argv)
 	game.frame_tint[2] = 1.0f;
 	game.frame_tint[3] = 1.0f;
 
+
+	game.fire = false;
+	game.dirt = false;
+
 	// add colliders
 
-	add_collider(&game, (float[3]) { -144.6, -100, -18.18 }, (float[3]) { 178.64, -0.1, 15.24 }); // TODO scale down
-	add_collider(&game, (float[3]) { 154, 0, -16.47 }, (float[3]) { 165, 10, -3.79 });
+	
+	add_collider(&game, (float[3]) { -6.8, 0, -4.2 }, (float[3]) { 4.2, -0.1, 4.4 }); //First island 
+	add_collider(&game, (float[3]) { 17.5, 0, -5.9 }, (float[3]) { 30.5, -0.1, 6.8 }); //Second island --- 2 Z + 2
+	add_collider(&game, (float[3]) { 43.9, 0, -6.4 }, (float[3]) { 57.9, -0.1, 6.1 }); //Third island 
+	add_collider(&game, (float[3]) { 72.1, 0, -9.2 }, (float[3]) { 85.1, -0.1, 9.3}); //4 island 
 
-	add_collider(&game, (float[3]) { -13.02, 0, -9.02 }, (float[3]) { 8.07, -0.1, 10.04 });
-	add_collider(&game, (float[3]) { 34.0, 0, -12.56 }, (float[3]) { 60, -0.1, 13 });
 
-	add_collider(&game, (float[3]) { -8.07, 0, 3.09 }, (float[3]) { -6.19, 10, 4.61 });
-	add_collider(&game, (float[3]) { -14.70, 0, -0.44 }, (float[3]) { -12.38, 10, 0.88 });
-	add_collider(&game, (float[3]) { -7.37, 0, -2.21 }, (float[3]) { -7.06, 10, -4.80 });
+	add_collider(&game, (float[3]) { -7.5f, 0, -0.16 }, (float[3]) { -6.0, 5, 0.4}); //Pillar fuse
+
+
+	add_collider(&game, (float[3]) { -4.4f, 0, 1.2 }, (float[3]) { -3.01, 5, 2}); //Pillar fuse2
+
+	add_collider(&game, (float[3]) { -4.3f, 0, -1.9 }, (float[3]) { -2.7, 5, -1.2}); //Pillar fuse3
+
+
+
+	add_collider(&game, (float[3]) { 45.0f, 0, 2.1 }, (float[3]) { 55.3, 2.5, 6.1}); //Volcan  µ
+
+
+
+	add_collider(&game, (float[3]) { 74.5f, 0, 4.5 }, (float[3]) { 75.73, 1.8, 5.1}); //crystale droite
+
+	add_collider(&game, (float[3]) { 80.4f, 0, 5.3}, (float[3]) { 81.4, 3, 6.5}); //crystale droite plus loin
+
+	add_collider(&game, (float[3]) { 79.4f, 0, 0.2 }, (float[3]) { 81.2, 4, 1.5}); //crystale droite plus loin loin  µ
+	add_collider(&game, (float[3]) { 77.8f, 0, -7.05 }, (float[3]) { 83.2, 4, -3.6}); //gros crystal
 
 	// register callbacks & start gameloop
 
