@@ -8,11 +8,14 @@
 #include "vertex.h"
 #include "model_loader.h"
 #include "skybox.h"
-#include "player.h"
+#include "collider.h"
 
 // forward declarations
 
 typedef struct fbo_t fbo_t;
+typedef struct player_t player_t;
+typedef struct entity_t entity_t;
+
 typedef struct
 {
 	matrix_t shake_mat;
@@ -20,6 +23,7 @@ typedef struct
 	int time;
 	bool shake;
 }shaker_t;
+
 typedef struct {
 	win_t *win;
 	gl_funcs_t gl;
@@ -60,8 +64,8 @@ typedef struct {
 
 } game_t;
 
+#include "player.h"
 #include "events.h"
-
 #include "vertex.h"
 #include "shader.h"
 #include "object.h"
@@ -190,9 +194,11 @@ int resize(void* param, uint32_t x_res, uint32_t y_res) {
 	return 0;
 }
 
-entity_t* add_entity(game_t* self, const char* model, const char* texture) {
+entity_t* add_entity(game_t* self, const char* model, const char* texture, void (*ai_cb) (entity_t* entity, float dt)) {
 	gl_funcs_t* gl = &self->gl;
-	entity_t* entity = new_entity();
+	entity_t* entity = new_entity(self);
+
+	entity->ai_cb = ai_cb;
 
 	entity->object = load_model(gl, "rsc/firefighter.ivx", self->entity_shader, true);
 	entity->object->tex_albedo = loadTexture2D(gl, "rsc/cardboard.png");
@@ -221,9 +227,10 @@ int main(int argc, char** argv)
 	win_t* win = create_win(800, 480);
 
 	game_t game = {
-		.win = win,
-		.player = new_player()
+		.win = win
 	};
+
+	game.player = new_player(&game);
 
 	gl_funcs_t *gl = &game.gl;
 	win->gl = gl;
@@ -321,7 +328,7 @@ int main(int argc, char** argv)
 	add_collider(&game, (float[3]) { 154, 0, -16.47 }, (float[3]) { 165, 10, -3.79 });
 
 	add_collider(&game, (float[3]) { -13.02, 0, -9.02 }, (float[3]) { 8.07, -0.1, 10.04 });
-	add_collider(&game, (float[3]) { 34.0, 0, -12,56 }, (float[3]) { 60, -0.1, 13 });
+	add_collider(&game, (float[3]) { 34.0, 0, -12.56 }, (float[3]) { 60, -0.1, 13 });
 
 	add_collider(&game, (float[3]) { -8.07, 0, 3.09 }, (float[3]) { -6.19, 10, 4.61 });
 	add_collider(&game, (float[3]) { -14.70, 0, -0.44 }, (float[3]) { -12.38, 10, 0.88 });
@@ -329,7 +336,7 @@ int main(int argc, char** argv)
 
 	// load entities
 
-	entity_t* firefighter = add_entity(&game, "rsc/firefighter.ivx", "rsc/cardboard.png");
+	entity_t* firefighter = add_entity(&game, "rsc/firefighter.ivx", "rsc/cardboard.png", firefighter_ai);
 
 	// register callbacks & start gameloop
 

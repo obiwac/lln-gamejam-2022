@@ -4,18 +4,18 @@
 
 #include <math.h>
 
-typedef struct {
+struct player_t {
 	entity_t entity;
 
 	int32_t input[2];
 	float target_rot[2];
 
 	float eyelevel;
-} player_t;
+};
 
-player_t* new_player(void) {
+player_t* new_player(game_t* game) {
 	player_t* player = calloc(1, sizeof *player);
-	static_new_entity(&player->entity);
+	static_new_entity(&player->entity, game);
 
 	player->eyelevel = 1.6;
 

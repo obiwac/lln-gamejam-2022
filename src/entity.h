@@ -9,7 +9,9 @@
 
 #define GRAVITY -32
 
-typedef struct {
+struct entity_t {
+	game_t* game;
+
 	float jump_height;
 
 	object_t* object;
@@ -25,7 +27,9 @@ typedef struct {
 
 	collider_t collider;
 	bool grounded;
-} entity_t;
+
+	void (*ai_cb) (entity_t* entity, float dt);
+};
 
 void update_collider(entity_t* entity) {
 	float x = entity->pos[0];
@@ -42,7 +46,9 @@ void update_collider(entity_t* entity) {
 	entity->collider.z2 = z + entity->width / 2;
 }
 
-void static_new_entity(entity_t* entity) {
+void static_new_entity(entity_t* entity, game_t* game) {
+	entity->game = game;
+
 	// defaults
 
 	entity->width  = 0.6;
@@ -51,9 +57,9 @@ void static_new_entity(entity_t* entity) {
 	entity->jump_height = 2.25;
 }
 
-entity_t* new_entity(void) {
+entity_t* new_entity(game_t* game) {
 	entity_t* entity = calloc(1, sizeof *entity);
-	static_new_entity(entity);
+	static_new_entity(entity, game);
 
 	return entity;
 }
@@ -82,6 +88,12 @@ static inline float __abs_min(float x, float y) {
 }
 
 void entity_update(entity_t* entity, size_t collider_count, collider_t** colliders, float dt) {
+	// process AI
+
+	if (entity->ai_cb) {
+		entity->ai_cb(entity, dt);
+	}
+
 	// calculate friction
 
 	float fx = 1.8;
@@ -211,4 +223,23 @@ void entity_update(entity_t* entity, size_t collider_count, collider_t** collide
 	// make sure we can rely on the entity's collider outside of this function
 
 	// TODO necessary?
+
+	// update object transformation
+
+	if (entity->object) {
+		memcpy(entity->object->transform.translation, entity->pos, sizeof entity->pos);
+		memcpy(entity->object->transform.rotation, entity->rot, sizeof entity->rot);
+	}
+}
+
+// entity-specific AI
+
+void villager_ai(entity_t* entity, float dt) {
+}
+
+void pig_ai(entity_t* entity, float dt) {
+}
+
+void firefighter_ai(entity_t* entity, float dt) {
+	entity->acc[0] = 3;
 }
