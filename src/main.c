@@ -13,7 +13,13 @@
 // forward declarations
 
 typedef struct fbo_t fbo_t;
-
+typedef struct 
+{
+	matrix_t shake_mat;
+	float shake_intensity;
+	int time;
+	bool shake;
+}shaker_t;
 typedef struct {
 	win_t *win;
 	gl_funcs_t gl;
@@ -41,7 +47,12 @@ typedef struct {
 	fbo_t** fbos;
 	size_t fbo_count;
 
+	shaker_t shaker;
+
 	float time;
+
+	float frame_tint[4];
+
 } game_t;
 
 #include "events.h"
@@ -108,7 +119,7 @@ int draw(void *param, float dt)
 		matrix_transform(object_a[i]->transform_matrix, object_a[i]->transform.translation, object_a[i]->transform.rotation, object_a[i]->transform.scale);
 
 		shader_uniform(object_a[i]->shader, "transform_matrix", &object_a[i]->transform_matrix);
-		shader_uniform(object_a[i]->shader, "tint", ((float[4]) { 0.0, 0.0, 1.0, 1.0 }));
+		shader_uniform(object_a[i]->shader, "tint", ((float[4]) { 0.0, 0.0, 1.0, 1.0 })) ;
 		shader_uniform(object_a[i]->shader, "time", self->time);
 		shader_uniform(object_a[i]->shader, "mvp_matrix", &self->mvp_matrix);
 
@@ -138,12 +149,18 @@ int draw(void *param, float dt)
 
 	//Combine All Texture for final result
 	gl->BindFramebuffer(GL_FRAMEBUFFER,0);
-	gl->ClearColor(0.7, 0.1, 0.1, 1.0);
+	gl->ClearColor(0.1, 0.1, 0.1, 1.0);
     gl->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	gl->ActiveTexture(GL_TEXTURE0);
 	gl->BindTexture(GL_TEXTURE_2D, self->combine_fbo->colour_texture);
-
+	matrix_identity(self->shaker.shake_mat);
+	if(self->shaker.shake)
+	{
+		matrix_translate(self->shaker.shake_mat,(float[3]){sin(rand())/self->shaker.shake_intensity,sin(rand())/self->shaker.shake_intensity,-100});
+	}
+	shader_uniform(default_quad->shader,"frame_tint",self->frame_tint);
+	shader_uniform(default_quad->shader,"shake_mat",&self->shaker.shake_mat);
 	render_object(gl, default_quad);
 
 	return 0;
@@ -267,11 +284,24 @@ int main(int argc, char** argv)
 	default_quad = create_object(&game.gl, combine_shader, false, quad, sizeof(quad), q_incides, sizeof(q_incides));
 
 	game.combine_fbo = new_fbo(&game, 1.0, 1.0);
+	game.shaker.shake_intensity = 10;
+	game.shaker.shake = false;
 
+	game.frame_tint[0] = 1.0f;
+	game.frame_tint[1] = 1.0f;
+	game.frame_tint[2] = 1.0f;
+	game.frame_tint[3] = 1.0f;
 	// add colliders
 
 	add_collider(&game, (float[3]) { -144.6, -100, -18.18 }, (float[3]) { 178.64, -0.1, 15.24 });
 	add_collider(&game, (float[3]) { 154, 0, -16.47 }, (float[3]) { 165, 10, -3.79 });
+
+	add_collider(&game, (float[3]) { -13.02, 0, -9.02 }, (float[3]) { 8.07, -0.1, 10.04 });
+	add_collider(&game, (float[3]) { 34.0, 0, -12,56 }, (float[3]) { 60, -0.1, 13 });
+
+	add_collider(&game, (float[3]) { -8.07, 0, 3.09 }, (float[3]) { -6.19, 10, 4.61 });
+	add_collider(&game, (float[3]) { -14.70, 0, -0.44 }, (float[3]) { -12.38, 10, 0.88 });
+	add_collider(&game, (float[3]) { -7.37, 0, -2.21 }, (float[3]) { -7.06, 10, -4.80 });
 
 	// register callbacks & start gameloop
 
