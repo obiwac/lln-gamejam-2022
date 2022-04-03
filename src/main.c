@@ -22,10 +22,15 @@ typedef struct {
 	matrix_t mv_matrix;
 	matrix_t mvp_matrix;
 
+	shader_t* shader;
+	shader_t* entity_shader;
+
 	// entities
 
 	player_t* player;
-	// TODO list of entities
+
+	size_t entity_count;
+	entity_t** entities;
 
 	// colliders
 
@@ -82,6 +87,11 @@ int draw(void *param, float dt)
 
 	update_mouse(self);
 	player_update(self->player, self->collider_count, self->colliders, dt);
+
+	for (size_t i = 0; i < self->entity_count; i++) {
+		entity_t* entity = self->entities[i];
+		entity_update(entity, self->collider_count, self->colliders, dt);
+	}
 
 	// projection matrix
 
@@ -163,6 +173,19 @@ int resize(void* param, uint32_t x_res, uint32_t y_res) {
 	return 0;
 }
 
+entity_t* add_entity(game_t* self, const char* model, const char* texture) {
+	gl_funcs_t* gl = &self->gl;
+	entity_t* entity = new_entity();
+
+	entity->object = load_model(gl, "rsc/firefighter.ivx", self->entity_shader, true);
+	entity->object->tex_albedo = loadTexture2D(gl, "rsc/cardboard.png");
+
+	self->entities = realloc(self->entities, ++self->entity_count * sizeof *self->entities);
+	self->entities[self->entity_count - 1] = entity;
+
+	return entity;
+}
+
 void add_collider(game_t* self, float pos1[3], float pos2[3]) {
 	self->colliders = realloc(self->colliders, ++self->collider_count * sizeof *self->colliders);
 	self->colliders[self->collider_count - 1] = new_collider(pos1, pos2);
@@ -240,7 +263,8 @@ int main(int argc, char** argv)
 	GL_REQUIRE(&game, DepthFunc)
 
 	sky = create_skybox(&game.gl);
-	shader_t* shader = create_shader(&game.gl, "default");
+	game.shader = create_shader(&game.gl, "default");
+	game.entity_shader = create_shader(&game.gl, "entity");
 	//Todo mode loading
 	vertex_t vert[] =
 	 {
@@ -253,7 +277,6 @@ int main(int argc, char** argv)
 	object_t *testTriangle;
 	//testTriangle = create_object(&game.gl, shader,true,vert,sizeof(vert),indices,sizeof(indices));
 	//testTriangle->tex_albedo = loadTexture2D(&game.gl,"rsc/Textures/checkboard.png");
-
 
 	vertex_t quad[] =
 	 {
@@ -273,9 +296,13 @@ int main(int argc, char** argv)
 	add_collider(&game, (float[3]) { -144.6, -100, -18.18 }, (float[3]) { 178.64, -0.1, 15.24 });
 	add_collider(&game, (float[3]) { 154, 0, -16.47 }, (float[3]) { 165, 10, -3.79 });
 
+	// load entities
+
+	entity_t* firefighter = add_entity(&game, "rsc/firefighter.ivx", "rsc/cardboard.png");
+
 	// register callbacks & start gameloop
 
-	object_t* obj = load_model(&game.gl, "obj-to-ivx/output.ivx", shader, true);
+	object_t* obj = load_model(&game.gl, "rsc/map.ivx", game.shader, true);
 	obj->tex_albedo = loadTexture2D(&game.gl, "work/8k.png");
 
 	obj->transform.scale[0] = 10.0;

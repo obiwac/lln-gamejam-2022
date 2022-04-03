@@ -12,6 +12,8 @@
 typedef struct {
 	float jump_height;
 
+	object_t* object;
+
 	float pos[3];
 	float rot[2];
 
