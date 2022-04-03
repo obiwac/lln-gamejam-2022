@@ -39,7 +39,6 @@ int keypress(void* param, xcb_keycode_t key) {
 	KEY(S, [1]--)
 
 	if (key == SPACE) {
-		printf("%f %f %f\n", player->entity.pos[0], player->entity.pos[1], player->entity.pos[2]);
 		entity_jump((entity_t*) player);
 	}
 
@@ -95,12 +94,9 @@ int mousepress(void* param) {
 }
 
 void die(bool hard) {
-	if (hard) {
-		exit(1);
-		// system("reboot");
+	if (getenv("ADULT_MODE")) {
+		system("reboot");
 	}
 
-	else {
-		exit(1);
-	}
+	exit(1);
 }

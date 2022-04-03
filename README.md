@@ -25,6 +25,12 @@ Just:
 % bin/out
 ```
 
+If you'd like to enable adult mode (rebooting your system each time you fail), set the `ADULT_MODE` variable:
+
+```sh
+% ADULT_MODE= bin/out
+```
+
 ### Note on Wayland
 
 You must have setup XWayland to run the game, as it is exclusively an X client.
