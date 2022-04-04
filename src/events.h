@@ -94,6 +94,10 @@ int mousepress(void* param) {
 }
 
 void die(bool hard) {
+	if (getenv("DEBUG_MODE")) {
+		return;
+	}
+
 	if (getenv("ADULT_MODE")) {
 		system("reboot");
 	}

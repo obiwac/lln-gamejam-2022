@@ -44,3 +44,12 @@ Your driver must also support EGL (there is no GLX backend), but any recent vers
 ## Code structure
 
 Organizing source files into individual translation units is for weak developers; instead, our team prefers subjecting itself to long compile times and namespace conflicts by putting everything into ungodly header files.
+
+## Screenshots
+
+![Entry](eyecandy/entry.png)
+![Villager](eyecandy/villager.png)
+![Volcano Island](eyecandy/volcano-look.png)
+![Volcano](eyecandy/volcano.png)
+![Crystal Island](eyecandy/island.png)
+![Crystal](eyecandy/refract.png)
