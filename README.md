@@ -39,7 +39,7 @@ You must have setup XWayland to run the game, as it is exclusively an X client.
 
 You must have a graphics adapter supporting at least modern OpenGL (or equivalent extensions).
 Id est, any version of OpenGL ES greater or equal to 2.0.
-Your driver must also support EGL (there is no GLX backend), but any recent versions of the NVIDIA or MESA drivers should be fine wrt to this.
+Your driver must also support EGL (there is no GLX backend), but any recent versions of the NVIDIA or MESA drivers should be fine wrt this.
 
 ## Code structure
 
